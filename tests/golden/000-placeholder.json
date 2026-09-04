@@ -1,0 +1,80 @@
+{
+  "name": "PLACEHOLDER — fill from the workbook",
+  "description": "Skeleton case. Set pending to false once the inputs and expected outputs are transcribed from a filled 2026 Deal Filter workbook.",
+  "source": "docs/2026_Toro_Deal_Filter.xlsx — deal name and date go here",
+  "pending": true,
+  "tolerance": 0.000001,
+  "productType": "mixed_use",
+  "input": {
+    "demographics": {
+      "mu": null,
+      "mf": null
+    },
+    "screen": {
+      "probability": 0.75,
+      "answers": {
+        "geography": null,
+        "market": null,
+        "location": null,
+        "barriers_to_entry": null,
+        "entitlements": null,
+        "competition": null,
+        "physical": null,
+        "seller_sophistication": null,
+        "control": null,
+        "market_viability": null,
+        "partner_quality": null,
+        "pursuit_costs": null,
+        "timing": null,
+        "brand_fit": null,
+        "capability": null,
+        "capacity": null,
+        "fee_potential": null
+      }
+    },
+    "firstLook": {
+      "components": {
+        "retail": { "noi": 0, "costExLand": 0 },
+        "office": { "noi": 0, "costExLand": 0 },
+        "multifamily": { "noi": 0, "costExLand": 0 }
+      },
+      "pads": {
+        "hotelKeys": 0,
+        "townhomeLots": 0,
+        "outparcels": 0
+      },
+      "askingPrice": 0,
+      "acreage": 0,
+      "sanity": {
+        "retailSf": 0,
+        "officeSf": 0,
+        "multifamilyUnits": 0
+      }
+    }
+  },
+  "expected": {
+    "demographics": {
+      "governingScore": null,
+      "band": null
+    },
+    "screen": {
+      "weightedScore": 0,
+      "answeredCount": 0,
+      "unknownShare": 0,
+      "koPass": "PASS",
+      "verdict": "NOT SCORED",
+      "probabilityWeightedScore": 0
+    },
+    "firstLook": {
+      "totalNoi": 0,
+      "totalCostSupported": 0,
+      "blendedYoc": 0,
+      "padProceedsTotal": 0,
+      "maxLandPrice": 0,
+      "landTest": null,
+      "landAtTdcRates": 0,
+      "retailShareOfNoi": 0,
+      "productTypeTest": null
+    }
+  }
+}

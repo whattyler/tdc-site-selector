@@ -1,0 +1,146 @@
+key,value,source,asof
+bucket.weight.real_estate,0.25,workbook:Assumptions!C7,2026-01-01
+bucket.weight.site,0.25,workbook:Assumptions!C8,2026-01-01
+bucket.weight.deal,0.30,workbook:Assumptions!C9,2026-01-01
+bucket.weight.toro,0.20,workbook:Assumptions!C10,2026-01-01
+answer.points.yes,3,workbook:Assumptions!C15,2026-01-01
+answer.points.maybe,1,workbook:Assumptions!C16,2026-01-01
+answer.points.no,0,workbook:Assumptions!C17,2026-01-01
+answer.points.max,3,workbook:DealScreen!F15 (Pts/3*Wt),2026-01-01
+verdict.go_min,70,workbook:Assumptions!C21,2026-01-01
+verdict.watch_min,55,workbook:Assumptions!C22,2026-01-01
+verdict.max_unknown_share,0.25,workbook:Assumptions!C23,2026-01-01
+verdict.knockout_active,true,workbook:Assumptions!C24,2026-01-01
+verdict.required_answered,17,workbook:DealScreen!I11 IF(I7<17),2026-01-01
+screen.probability.default,0.75,workbook:DealScreen!C31,2026-01-01
+screen.probability.min,0.5,spec:B5 section 6 probability slider,2026-09-03
+screen.probability.max,1.0,spec:B5 section 6 probability slider,2026-09-03
+yoc.target.retail,0.075,workbook:Assumptions!C28,2026-01-01
+yoc.target.office,0.075,workbook:Assumptions!C29,2026-01-01
+yoc.target.multifamily,0.065,workbook:Assumptions!C30,2026-01-01
+land.carry_rate,0.055,workbook:Assumptions!C31,2026-01-01
+land.rate.retail_psf,20,workbook:Assumptions!C35,2026-01-01
+land.rate.office_psf,20,workbook:Assumptions!C36,2026-01-01
+land.rate.multifamily_per_unit,40000,workbook:Assumptions!C37,2026-01-01
+pad.rate.hotel_per_key,20000,workbook:Assumptions!C41,2026-01-01
+pad.rate.townhome_per_lot,,placeholder,2026-01-01
+pad.rate.outparcel_per_parcel,,placeholder,2026-01-01
+product_type.max_retail_noi_share_for_mf,0.15,workbook:Assumptions!C47,2026-01-01
+demo.band.mixed_use.go,80,workbook:Assumptions!C51,2026-01-01
+demo.band.mixed_use.nogo,50,workbook:Assumptions!D51,2026-01-01
+demo.band.multifamily.go,70,workbook:Assumptions!C52,2026-01-01
+demo.band.multifamily.nogo,40,workbook:Assumptions!D52,2026-01-01
+demo.score.max,100,workbook:DealScreen!D15 MIN(3;score/100*3),2026-01-01
+sensitivity.comm_yoc_axis,"0.07,0.0725,0.075,0.0775,0.08",workbook:FirstLookUW!C48:G48,2026-01-01
+sensitivity.mf_yoc_axis,"0.06,0.0625,0.065,0.0675,0.07",workbook:FirstLookUW!B49:B53,2026-01-01
+geography.band.yes_max_minutes,30,spec:B5 section 1 drive time <=30 Yes,2026-09-03
+geography.band.maybe_max_minutes,45,spec:B5 section 1 drive time 30-45 Maybe,2026-09-03
+cost.escalation.annual,0.04,placeholder,2026-09-01
+criterion.demographics.label,Demographics,workbook:DealScreen!B15,2026-01-01
+criterion.demographics.bucket,real_estate,workbook:DealScreen!B14,2026-01-01
+criterion.demographics.weight,10,workbook:DealScreen!E15,2026-01-01
+criterion.demographics.ko,false,workbook:DealScreen!G15,2026-01-01
+criterion.demographics.kind,computed,workbook:DealScreen!D15 from Demographics tab,2026-01-01
+criterion.demographics.order,1,workbook:DealScreen row order,2026-01-01
+criterion.geography.label,Geography,workbook:DealScreen!B16,2026-01-01
+criterion.geography.bucket,real_estate,workbook:DealScreen!B14,2026-01-01
+criterion.geography.weight,5,workbook:DealScreen!E16,2026-01-01
+criterion.geography.ko,true,workbook:DealScreen!G16,2026-01-01
+criterion.geography.kind,answered,workbook:DealScreen!C16,2026-01-01
+criterion.geography.order,2,workbook:DealScreen row order,2026-01-01
+criterion.market.label,Market,workbook:DealScreen!B17,2026-01-01
+criterion.market.bucket,real_estate,workbook:DealScreen!B14,2026-01-01
+criterion.market.weight,6,workbook:DealScreen!E17,2026-01-01
+criterion.market.ko,false,workbook:DealScreen!G17,2026-01-01
+criterion.market.kind,answered,workbook:DealScreen!C17,2026-01-01
+criterion.market.order,3,workbook:DealScreen row order,2026-01-01
+criterion.location.label,Location,workbook:DealScreen!B18,2026-01-01
+criterion.location.bucket,real_estate,workbook:DealScreen!B14,2026-01-01
+criterion.location.weight,4,workbook:DealScreen!E18,2026-01-01
+criterion.location.ko,false,workbook:DealScreen!G18,2026-01-01
+criterion.location.kind,answered,workbook:DealScreen!C18,2026-01-01
+criterion.location.order,4,workbook:DealScreen row order,2026-01-01
+criterion.barriers_to_entry.label,Barriers to Entry,workbook:DealScreen!B20,2026-01-01
+criterion.barriers_to_entry.bucket,site,workbook:DealScreen!B19,2026-01-01
+criterion.barriers_to_entry.weight,6,workbook:DealScreen!E20,2026-01-01
+criterion.barriers_to_entry.ko,false,workbook:DealScreen!G20,2026-01-01
+criterion.barriers_to_entry.kind,answered,workbook:DealScreen!C20,2026-01-01
+criterion.barriers_to_entry.order,5,workbook:DealScreen row order,2026-01-01
+criterion.entitlements.label,Entitlements,workbook:DealScreen!B21,2026-01-01
+criterion.entitlements.bucket,site,workbook:DealScreen!B19,2026-01-01
+criterion.entitlements.weight,9,workbook:DealScreen!E21,2026-01-01
+criterion.entitlements.ko,true,workbook:DealScreen!G21,2026-01-01
+criterion.entitlements.kind,answered,workbook:DealScreen!C21,2026-01-01
+criterion.entitlements.order,6,workbook:DealScreen row order,2026-01-01
+criterion.competition.label,Competition,workbook:DealScreen!B22,2026-01-01
+criterion.competition.bucket,site,workbook:DealScreen!B19,2026-01-01
+criterion.competition.weight,5,workbook:DealScreen!E22,2026-01-01
+criterion.competition.ko,false,workbook:DealScreen!G22,2026-01-01
+criterion.competition.kind,answered,workbook:DealScreen!C22,2026-01-01
+criterion.competition.order,7,workbook:DealScreen row order,2026-01-01
+criterion.physical.label,Physical,workbook:DealScreen!B23,2026-01-01
+criterion.physical.bucket,site,workbook:DealScreen!B19,2026-01-01
+criterion.physical.weight,5,workbook:DealScreen!E23,2026-01-01
+criterion.physical.ko,false,workbook:DealScreen!G23,2026-01-01
+criterion.physical.kind,answered,workbook:DealScreen!C23,2026-01-01
+criterion.physical.order,8,workbook:DealScreen row order,2026-01-01
+criterion.seller_sophistication.label,Seller Sophistication,workbook:DealScreen!B25,2026-01-01
+criterion.seller_sophistication.bucket,deal,workbook:DealScreen!B24,2026-01-01
+criterion.seller_sophistication.weight,3,workbook:DealScreen!E25,2026-01-01
+criterion.seller_sophistication.ko,false,workbook:DealScreen!G25,2026-01-01
+criterion.seller_sophistication.kind,answered,workbook:DealScreen!C25,2026-01-01
+criterion.seller_sophistication.order,9,workbook:DealScreen row order,2026-01-01
+criterion.control.label,Control,workbook:DealScreen!B26,2026-01-01
+criterion.control.bucket,deal,workbook:DealScreen!B24,2026-01-01
+criterion.control.weight,8,workbook:DealScreen!E26,2026-01-01
+criterion.control.ko,true,workbook:DealScreen!G26,2026-01-01
+criterion.control.kind,answered,workbook:DealScreen!C26,2026-01-01
+criterion.control.order,10,workbook:DealScreen row order,2026-01-01
+criterion.market_viability.label,Market viability of all products,workbook:DealScreen!B27,2026-01-01
+criterion.market_viability.bucket,deal,workbook:DealScreen!B24,2026-01-01
+criterion.market_viability.weight,7,workbook:DealScreen!E27,2026-01-01
+criterion.market_viability.ko,false,workbook:DealScreen!G27,2026-01-01
+criterion.market_viability.kind,answered,workbook:DealScreen!C27,2026-01-01
+criterion.market_viability.order,11,workbook:DealScreen row order,2026-01-01
+criterion.partner_quality.label,Partner Quality,workbook:DealScreen!B28,2026-01-01
+criterion.partner_quality.bucket,deal,workbook:DealScreen!B24,2026-01-01
+criterion.partner_quality.weight,4,workbook:DealScreen!E28,2026-01-01
+criterion.partner_quality.ko,false,workbook:DealScreen!G28,2026-01-01
+criterion.partner_quality.kind,answered,workbook:DealScreen!C28,2026-01-01
+criterion.partner_quality.order,12,workbook:DealScreen row order,2026-01-01
+criterion.pursuit_costs.label,Pursuit costs,workbook:DealScreen!B29,2026-01-01
+criterion.pursuit_costs.bucket,deal,workbook:DealScreen!B24,2026-01-01
+criterion.pursuit_costs.weight,3,workbook:DealScreen!E29,2026-01-01
+criterion.pursuit_costs.ko,false,workbook:DealScreen!G29,2026-01-01
+criterion.pursuit_costs.kind,answered,workbook:DealScreen!C29,2026-01-01
+criterion.pursuit_costs.order,13,workbook:DealScreen row order,2026-01-01
+criterion.timing.label,Timing,workbook:DealScreen!B30,2026-01-01
+criterion.timing.bucket,deal,workbook:DealScreen!B24,2026-01-01
+criterion.timing.weight,5,workbook:DealScreen!E30,2026-01-01
+criterion.timing.ko,false,workbook:DealScreen!G30,2026-01-01
+criterion.timing.kind,answered,workbook:DealScreen!C30,2026-01-01
+criterion.timing.order,14,workbook:DealScreen row order,2026-01-01
+criterion.brand_fit.label,Brand fit,workbook:DealScreen!B33,2026-01-01
+criterion.brand_fit.bucket,toro,workbook:DealScreen!B32,2026-01-01
+criterion.brand_fit.weight,5,workbook:DealScreen!E33,2026-01-01
+criterion.brand_fit.ko,true,workbook:DealScreen!G33,2026-01-01
+criterion.brand_fit.kind,answered,workbook:DealScreen!C33,2026-01-01
+criterion.brand_fit.order,15,workbook:DealScreen row order,2026-01-01
+criterion.capability.label,Capability,workbook:DealScreen!B34,2026-01-01
+criterion.capability.bucket,toro,workbook:DealScreen!B32,2026-01-01
+criterion.capability.weight,4,workbook:DealScreen!E34,2026-01-01
+criterion.capability.ko,false,workbook:DealScreen!G34,2026-01-01
+criterion.capability.kind,answered,workbook:DealScreen!C34,2026-01-01
+criterion.capability.order,16,workbook:DealScreen row order,2026-01-01
+criterion.capacity.label,Capacity,workbook:DealScreen!B35,2026-01-01
+criterion.capacity.bucket,toro,workbook:DealScreen!B32,2026-01-01
+criterion.capacity.weight,6,workbook:DealScreen!E35,2026-01-01
+criterion.capacity.ko,true,workbook:DealScreen!G35,2026-01-01
+criterion.capacity.kind,answered,workbook:DealScreen!C35,2026-01-01
+criterion.capacity.order,17,workbook:DealScreen row order,2026-01-01
+criterion.fee_potential.label,Fee Potential,workbook:DealScreen!B36,2026-01-01
+criterion.fee_potential.bucket,toro,workbook:DealScreen!B32,2026-01-01
+criterion.fee_potential.weight,5,workbook:DealScreen!E36,2026-01-01
+criterion.fee_potential.ko,false,workbook:DealScreen!G36,2026-01-01
+criterion.fee_potential.kind,answered,workbook:DealScreen!C36,2026-01-01
+criterion.fee_potential.order,18,workbook:DealScreen row order,2026-01-01
