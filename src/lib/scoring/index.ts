@@ -33,6 +33,12 @@ export {
 } from "./assumptions";
 
 export {
+  combinedVerdict,
+  type CombinedVerdict,
+  type Gate2Result,
+} from "./combined";
+
+export {
   band,
   type DemographicScores,
   type DemographicsResult,
