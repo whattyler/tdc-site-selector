@@ -320,6 +320,60 @@ describe("first look", () => {
     expect(result.blendedYoc).toBeLessThan(A.yoc.retail);
   });
 
+  it("measures yield against the cost incurred, not the cost supported", () => {
+    const result = firstLook(DEAL, A);
+    expect(result.yocOnCost).toBeCloseTo(6_000_000 / 68_000_000, 12);
+    // The gap is what the panel reads: short of the hurdle is negative.
+    expect(result.yocGapBps).toBeCloseTo(
+      (result.yocOnCost - result.blendedYoc) * 10_000,
+      6,
+    );
+    // This deal beats its hurdle: $6M on $68M is 8.82% against a ~6.6% blend.
+    expect(result.yocGapBps).toBeGreaterThan(0);
+
+    // Double the cost and the same income falls short of the same hurdle.
+    const dear = firstLook(
+      {
+        ...DEAL,
+        components: {
+          retail: { ...DEAL.components.retail, costExLand: 16_000_000 },
+          office: { ...DEAL.components.office, costExLand: 0 },
+          multifamily: { ...DEAL.components.multifamily, costExLand: 120_000_000 },
+        },
+      },
+      A,
+    );
+    expect(dear.blendedYoc).toBeCloseTo(result.blendedYoc, 12);
+    expect(dear.yocGapBps).toBeLessThan(0);
+  });
+
+  it("closes the gap to zero when cost incurred equals cost supported", () => {
+    const result = firstLook(DEAL, A);
+    // Rebuild the same deal with the cost the income exactly supports.
+    const exact = firstLook(
+      {
+        ...DEAL,
+        components: {
+          retail: {
+            noi: DEAL.components.retail.noi,
+            costExLand: DEAL.components.retail.noi / A.yoc.retail,
+          },
+          office: {
+            noi: DEAL.components.office.noi,
+            costExLand: DEAL.components.office.noi / A.yoc.office,
+          },
+          multifamily: {
+            noi: DEAL.components.multifamily.noi,
+            costExLand: DEAL.components.multifamily.noi / A.yoc.multifamily,
+          },
+        },
+      },
+      A,
+    );
+    expect(exact.totalCostExLand).toBeCloseTo(result.totalCostSupported, 6);
+    expect(exact.yocGapBps).toBeCloseTo(0, 6);
+  });
+
   it("refuses to price a parcel off a placeholder rate", () => {
     expect(() =>
       padProceeds({ hotelKeys: 0, townhomeLots: 0, outparcels: 3 }, A),

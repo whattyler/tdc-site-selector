@@ -99,6 +99,15 @@ export interface FirstLookResult {
   totalCostSupported: number;
   /** Blended hurdle implied by this component mix, not a fixed number. */
   blendedYoc: number;
+  /**
+   * Yield on the cost we would actually incur, against the hurdle the mix
+   * implies. `blendedYoc` divides NOI by the cost the income *supports*, so it
+   * always lands on the target by construction; this divides by the cost the
+   * budget *is*. The two are the same number only when the deal exactly clears.
+   */
+  yocOnCost: number;
+  /** yocOnCost less blendedYoc, in basis points. Negative is short of the hurdle. */
+  yocGapBps: number;
 
   /** Step 2 — parcels we sell rather than build. */
   padProceeds: PadProceedsResult;
@@ -353,6 +362,8 @@ export function firstLook(
     0,
   );
   const blendedYoc = safeDiv(totalNoi, totalCostSupported);
+  const yocOnCost = safeDiv(totalNoi, totalCostExLand);
+  const yocGapBps = (yocOnCost - blendedYoc) * 10_000;
 
   const pads = padProceeds(input.pads, assumptions);
 
@@ -381,6 +392,8 @@ export function firstLook(
     totalCostExLand,
     totalCostSupported,
     blendedYoc,
+    yocOnCost,
+    yocGapBps,
 
     padProceeds: pads,
 

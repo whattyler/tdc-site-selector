@@ -33,6 +33,18 @@ export function percent(
   return `${sign}${(Math.abs(value) * 100).toFixed(digits)}%`;
 }
 
+/**
+ * `−279 bps` — a signed yield gap, rounded to whole basis points. Signed both
+ * ways: this row exists to be compared against zero, so a positive gap has to
+ * announce itself as clearly as a negative one.
+ */
+export function bps(value: number | null | undefined): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return "—";
+  const rounded = Math.round(value);
+  const sign = rounded < 0 ? "−" : rounded > 0 ? "+" : "";
+  return `${sign}${Math.abs(rounded).toLocaleString()} bps`;
+}
+
 /** `12%` — whole-number percentage, for the unknown share. */
 export function percent0(value: number | null | undefined): string {
   return percent(value, 0);

@@ -1,6 +1,13 @@
 "use client";
 
-import { compact, money, percent, percent0, score as fmtScore } from "@/lib/format";
+import {
+  bps,
+  compact,
+  money,
+  percent,
+  percent0,
+  score as fmtScore,
+} from "@/lib/format";
 import type {
   CombinedVerdict,
   DemographicsResult,
@@ -182,8 +189,18 @@ export function VerdictPanel({
 
         <DetailGroup title="First Look" muted={!firstLook}>
           <DetailRow
-            label="Blended YoC"
+            label="YoC on cost"
+            value={firstLook ? percent(firstLook.yocOnCost) : "—"}
+          />
+          <DetailRow
+            label="Target blend"
             value={firstLook ? percent(firstLook.blendedYoc) : "—"}
+          />
+          <DetailRow
+            label="Gap"
+            value={firstLook ? bps(firstLook.yocGapBps) : "—"}
+            // Short of the hurdle is the thing this row is here to say.
+            tone={firstLook && firstLook.yocGapBps < 0 ? "short" : undefined}
           />
           <DetailRow
             label="NOI"
@@ -400,11 +417,25 @@ function DetailGroup({
   );
 }
 
-function DetailRow({ label, value }: { label: string; value: string }) {
+function DetailRow({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: "short";
+}) {
   return (
     <div className="flex items-baseline justify-between gap-3 leading-[1.65]">
       <dt className="text-sm text-ink">{label}</dt>
-      <dd className={cn("num text-sm", value === "—" && "font-normal text-ink-3")}>
+      <dd
+        className={cn(
+          "num text-sm",
+          tone === "short" && "text-maybe",
+          value === "—" && "font-normal text-ink-3",
+        )}
+      >
         {value}
       </dd>
     </div>
