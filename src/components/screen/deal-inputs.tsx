@@ -36,6 +36,12 @@ export interface DealFields {
    * correction.
    */
   lastSubmarketFromGeocode: string | null;
+  /**
+   * Where MU/MF came from. Flips to `manual` the moment either field is
+   * edited, and never flips back on its own.
+   */
+  demoSource: "none" | "api" | "manual" | "failed";
+  demoDetail: string | null;
 }
 
 export const EMPTY_DEAL: DealFields = {
@@ -52,12 +58,24 @@ export const EMPTY_DEAL: DealFields = {
   county: null,
   state: null,
   lastSubmarketFromGeocode: null,
+  demoSource: "none",
+  demoDetail: null,
+};
+
+const DEMO_SOURCE_LABEL: Record<DealFields["demoSource"], string> = {
+  none: "Not pulled yet",
+  api: "Census ACS",
+  manual: "Typed by hand",
+  failed: "Pull failed — type them",
 };
 
 interface DealInputsProps {
   values: DealFields;
   onChange: <K extends keyof DealFields>(key: K, value: DealFields[K]) => void;
   onGeocoded: (result: GeocodeResult) => void;
+  /** Editing either score by hand flips the source to manual. */
+  onDemographicEdit: (key: "mu" | "mf", value: string) => void;
+  demographicsStatus: "idle" | "loading";
   /** What the product type selects, for the hint under the score fields. */
   governing: "Mixed-Use" | "Multifamily" | "neither";
 }
@@ -66,6 +84,8 @@ export function DealInputs({
   values,
   onChange,
   onGeocoded,
+  onDemographicEdit,
+  demographicsStatus,
   governing,
 }: DealInputsProps) {
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
@@ -204,16 +224,38 @@ export function DealInputs({
             <NumberField
               label="Mixed-Use score"
               value={values.mu}
-              onChange={(value) => onChange("mu", value)}
+              onChange={(value) => onDemographicEdit("mu", value)}
               hint={governing === "Mixed-Use" ? "Governing" : undefined}
             />
             <NumberField
               label="Multifamily score"
               value={values.mf}
-              onChange={(value) => onChange("mf", value)}
+              onChange={(value) => onDemographicEdit("mf", value)}
               hint={governing === "Multifamily" ? "Governing" : undefined}
             />
-            <div />
+            <div className="self-end pb-1">
+              <span className="micro block leading-none">Source</span>
+              <span
+                className={cn(
+                  "mt-1 block text-sm",
+                  values.demoSource === "failed" ? "text-maybe" : "text-ink",
+                )}
+              >
+                {demographicsStatus === "loading"
+                  ? "Pulling from the Census…"
+                  : DEMO_SOURCE_LABEL[values.demoSource]}
+              </span>
+              {values.demoDetail && (
+                <span
+                  className={cn(
+                    "mt-0.5 block text-sm",
+                    values.demoSource === "failed" ? "text-maybe" : "text-ink-3",
+                  )}
+                >
+                  {values.demoDetail}
+                </span>
+              )}
+            </div>
           </FieldGrid>
         </div>
 

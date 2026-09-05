@@ -6,6 +6,7 @@ import type {
   DemographicsResult,
   FirstLookResult,
   Gate2Result,
+  ScoredMetric,
   ScreenResult,
 } from "@/lib/scoring";
 import { cn } from "@/lib/utils";
@@ -59,6 +60,8 @@ interface VerdictPanelProps {
   mu: number | null;
   mf: number | null;
   resiUnits: number | null;
+  /** The nine metrics behind the pull, when there has been one. */
+  demographicMetrics: ScoredMetric[] | null;
 }
 
 export function VerdictPanel({
@@ -71,6 +74,7 @@ export function VerdictPanel({
   mu,
   mf,
   resiUnits,
+  demographicMetrics,
 }: VerdictPanelProps) {
   const tone = verdictTone(combined);
 
@@ -153,6 +157,10 @@ export function VerdictPanel({
             }
           />
         </DetailGroup>
+
+        {demographicMetrics && demographicMetrics.length > 0 && (
+          <MetricsTable metrics={demographicMetrics} />
+        )}
 
         <DetailGroup title="Screen">
           <DetailRow label="Weighted" value={fmtScore(screen.weightedScore)} />
@@ -278,6 +286,99 @@ function GateLine({
           {line}
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * The nine metrics behind MU and MF, with the weight each profile gives them
+ * and what the raw value was. This is the "show why" the spec asks for — a
+ * score with no visible inputs is a number nobody can argue with.
+ */
+function MetricsTable({ metrics }: { metrics: ScoredMetric[] }) {
+  const format = (metric: ScoredMetric): string => {
+    if (metric.value === null) return "—";
+    switch (metric.key) {
+      case "avgIncome":
+      case "discretionary":
+        return money(metric.value);
+      case "totalPop":
+        return compact(metric.value);
+      case "education":
+      case "hhFormation":
+      case "youngAdult":
+      case "rentToIncome":
+      case "primeRenter":
+        return percent(metric.value, 1);
+      default:
+        return metric.value.toFixed(2);
+    }
+  };
+
+  return (
+    <div className="border-t border-line px-4 py-3">
+      <div className="section-head mb-1.5">Metrics</div>
+      <table className="w-full border-collapse">
+        <thead>
+          <tr>
+            <th className="micro pb-1 text-left font-normal">Metric</th>
+            <th className="micro pb-1 pl-2 text-right font-normal">Value</th>
+            <th className="micro pb-1 pl-2 text-right font-normal">MU</th>
+            <th className="micro pb-1 pl-2 text-right font-normal">MF</th>
+          </tr>
+        </thead>
+        <tbody>
+          {metrics.map((metric) => (
+            <tr key={metric.key} className="align-baseline">
+              <td className="py-[2px] text-sm text-ink">
+                {metric.label}
+                {metric.flag && (
+                  <span
+                    className="ml-1.5 text-maybe"
+                    title={metric.flag}
+                    aria-label={metric.flag}
+                  >
+                    ⚑
+                  </span>
+                )}
+                {metric.floor !== "none" && (
+                  <span
+                    className={cn(
+                      "micro ml-1.5 border px-1 py-[1px] leading-none",
+                      metric.floor === "hard"
+                        ? "border-nogo bg-nogo text-ink-inverse"
+                        : "border-line-strong text-maybe",
+                    )}
+                    title={`Below the ${metric.floor} floor`}
+                  >
+                    {metric.floor}
+                  </span>
+                )}
+              </td>
+              <td className="num py-[2px] pl-2 text-sm">{format(metric)}</td>
+              <td
+                className={cn(
+                  "num py-[2px] pl-2 text-sm",
+                  metric.weightMu === null && "font-normal text-ink-3",
+                )}
+              >
+                {metric.weightMu ?? "—"}
+              </td>
+              <td
+                className={cn(
+                  "num py-[2px] pl-2 text-sm",
+                  metric.weightMf === null && "font-normal text-ink-3",
+                )}
+              >
+                {metric.weightMf ?? "—"}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {metrics.some((m) => m.flag) && (
+        <p className="caption mt-1.5">⚑ hover for why this metric is qualified</p>
+      )}
     </div>
   );
 }

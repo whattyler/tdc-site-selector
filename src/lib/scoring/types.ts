@@ -42,6 +42,36 @@ export type LandTest = "PASS" | "FAIL" | null;
 /** The three built components. Pads are sold, not built, and are separate. */
 export type ComponentKey = "retail" | "office" | "multifamily";
 
+/**
+ * The nine demographic metrics. Each profile weights seven of them.
+ *
+ * Lives here rather than in demographics.ts so `assumptions.ts` can key its
+ * weight and floor tables on it without the two modules importing each other.
+ */
+export type DemographicMetricKey =
+  | "avgIncome"
+  | "totalPop"
+  | "education"
+  | "discretionary"
+  | "migration"
+  | "hhFormation"
+  | "youngAdult"
+  | "rentToIncome"
+  | "primeRenter";
+
+/** `demo.weight.*` / `demo.floor.*` use snake_case; the engine uses camel. */
+export const DEMOGRAPHIC_METRIC_BY_SLUG: Record<string, DemographicMetricKey> = {
+  avg_income: "avgIncome",
+  total_pop: "totalPop",
+  education: "education",
+  discretionary: "discretionary",
+  migration: "migration",
+  hh_formation: "hhFormation",
+  young_adult: "youngAdult",
+  rent_to_income: "rentToIncome",
+  prime_renter: "primeRenter",
+};
+
 /** One row of the `assumptions` table. */
 export interface AssumptionRow {
   key: string;

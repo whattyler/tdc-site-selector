@@ -108,6 +108,16 @@ Retire the password gate on the hub. Keep it only on the Goose download page (th
 
 ## A4. Site Selector → Demographics: OIDC, no shared secret
 
+> **SUPERSEDED (Sept 2026).** Site Selector does not call the dashboard. The dashboard's scoring
+> was ported into this app and runs server-side against the Census API — see B5 §2 and
+> `docs/demographics-port-report.md`. The audit that prompted the change found the live dashboard
+> returning 3-mile populations at roughly 5% of true and MF = 35 on every site, from a TIGERweb
+> geography vintage mismatch and a county-scoped fetch. Depending on it over OIDC would have
+> imported both defects.
+>
+> The OIDC machinery below still stands as the pattern for any *other* internal API call between
+> apps once Part A lands. Nothing in Phase 4 uses it.
+
 Dashboard side. New route in `apps/demographics/app/api/score/route.ts`:
 
 ```ts
@@ -356,7 +366,7 @@ This is a first look, not the proforma tool. Separate project. They share `cost_
 | Auth | `packages/auth` (Entra). Roles: `admin` / `user` |
 | Maps | Google Maps Platform: Geocoding, Places (Nearby + Details), Maps JS. Server key in route handlers only |
 | Parcel | Regrid API, optional (Phase 3b). Otherwise acreage typed |
-| Demographics | `/api/score` on the dashboard over OIDC (A4) |
+| Demographics | Ported into this app. Census ACS 5-year + TIGERweb block groups, server-side. No dashboard call (A4 superseded) |
 | AI | Anthropic API, direct. Comp rent drafting, memo prose. Never in the scoring path |
 | PDF | `@react-pdf/renderer` |
 | Tests | Vitest, golden cases from the workbook |
@@ -448,7 +458,21 @@ A geocode failure says so inline and leaves the typed address alone. Nothing abo
 
 ### 2 · Demographics
 
-`fetchDemographics()` per A4, cached on `(geohash7, radius, version)`. Store mu, mf, population, and the nine metrics with weights so the page shows why. Bands from `assumptions`. Governing score follows product type exactly as the workbook does. Calibration chips: Avalon 100/85, Carmel 101/85, Medley 93/80, Overlook 16/55. If the call fails, fields become editable and `source = manual`. Never silently zero.
+**Ported, not called.** The dashboard's MU/MF scoring runs inside this app. `GET /api/demographics?lat&lng&radius` behind `proxy.ts`; `CENSUS_API_KEY` server-side only.
+
+- `src/lib/demographics/census.ts` — ACS fetch and radius interpolation. Block groups come from `tigerWMS_Census2020` layer 8 (the vintage the 2022 ACS tables are published on) found by **envelope intersection around the circle, not by county**. Counties touched are an output. Area-weighted: `intersection area / block-group AREALAND`, clamped to 1. Only the ~25 ACS variables the nine metrics need.
+- `src/lib/scoring/demographics.ts` — pure scoring beside `band()`. Nine metrics, seven per profile, both summing to 100. Normalizers, weights, gates and floors ported verbatim; see the report for the table.
+- ACS vintage, default radius and the MU anchor come from `assumptions` (`demo.acs.year`, `demo.radius.default_mi`, `demo.mu.anchor_raw`). MU scale is `100 / anchor`; MF is absolute.
+
+Cached in memory on `(geohash7, radius, version)` where `version = acs<year>/s<scoringRevision>`. The DB cache lands with Phase 8.
+
+Response: `{ mu, mf, population, radius, acsYear, counties[], metrics[{ key, label, value, normalized, weightMu, weightMf, floor, flag? }], version, pulledAt }`.
+
+Two departures from the dashboard, both about honesty. **Errors surface as errors** — the dashboard's `safeGate()` turns a thrown error into "below all floors", which renders as a legitimate NO-GO. **A missing migration county yields null and a flag**, not the dashboard's 0.5 default. `hhFormation` is carried as-is but flagged `near-saturated`; it is `households / population` against a cap of 0.5, so it contributes ~4 of its 5 points for any ordinary market.
+
+Page behaviour: after a geocode the pull runs automatically and fills MU/MF. Fields stay editable throughout. Editing either flips `source` to `manual` and says so. A failure leaves the fields editable and prints why. Never silently zero.
+
+Calibration chips: Avalon 100/85, Carmel 101/85, Medley 93/80, Overlook 16/55 — recorded from a dashboard build that predates the defects above. Treat them as values to explain, not to match; the port's results and deltas are in `docs/demographics-port-report.md`.
 
 ### 3 · Program
 
@@ -546,7 +570,7 @@ Golden tests: fill the workbook for three real deals (one GO, one NO-GO via knoc
 | 1 | Engine | `packages/scoring` ported, golden tests green | 2 |
 | 2 | Screen page | Section 6 + verdict panel, manual demographics. Ship | 2 |
 | 3 | Site | Geocode, satellite aerial, jurisdiction. 3b Regrid | 1–2 |
-| 4 | Demographics | Wire A4, metric table, manual fallback, cache | 1 |
+| 4 | Demographics | Port the dashboard scoring, metric table, manual fallback, cache | 1 |
 | 5 | Costs | Library, admin editor, resolver, escalation, multipliers, log | 2 + a day of pulling rates |
 | 6 | Revenue & comps | Places, comp table, NOI, AI draft | 2 |
 | 7 | First Look wired | Cost and NOI into residual; sensitivity drawer | 1 |

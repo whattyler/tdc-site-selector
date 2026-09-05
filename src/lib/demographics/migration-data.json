@@ -1,0 +1,214 @@
+{
+  "source": "IRS Statistics of Income, County-to-County Migration Data",
+  "url": "https://www.irs.gov/statistics/soi-tax-stats-migration-data",
+  "filingYear": "2021-2022",
+  "reflects": "2020-2021 migration",
+  "units": "inflows/outflows are tax returns (a household proxy); agiIn/agiOut are average adjusted gross income per return, in dollars",
+  "portedFrom": "live-demographics-starter/src/lib/migration-data.js",
+  "portedOn": "2026-09-04",
+  "counties": {
+    "12057": {
+      "county": "Hillsborough County, FL",
+      "inflows": 32400,
+      "outflows": 26800,
+      "agiIn": 68700,
+      "agiOut": 58900
+    },
+    "12101": {
+      "county": "Pasco County, FL",
+      "inflows": 14200,
+      "outflows": 8650,
+      "agiIn": 58400,
+      "agiOut": 49200
+    },
+    "12109": {
+      "county": "St. Johns County, FL",
+      "inflows": 8450,
+      "outflows": 4280,
+      "agiIn": 89200,
+      "agiOut": 72600
+    },
+    "12111": {
+      "county": "St. Lucie County, FL",
+      "inflows": 9840,
+      "outflows": 6720,
+      "agiIn": 62400,
+      "agiOut": 51800
+    },
+    "13063": {
+      "county": "Clayton County, GA",
+      "inflows": 8920,
+      "outflows": 10340,
+      "agiIn": 38200,
+      "agiOut": 41500
+    },
+    "13067": {
+      "county": "Cobb County, GA",
+      "inflows": 19280,
+      "outflows": 18450,
+      "agiIn": 71800,
+      "agiOut": 66900
+    },
+    "13089": {
+      "county": "DeKalb County, GA",
+      "inflows": 18930,
+      "outflows": 21640,
+      "agiIn": 58200,
+      "agiOut": 54800
+    },
+    "13117": {
+      "county": "Forsyth County, GA",
+      "inflows": 9840,
+      "outflows": 6120,
+      "agiIn": 98700,
+      "agiOut": 74300
+    },
+    "13121": {
+      "county": "Fulton County, GA",
+      "inflows": 28420,
+      "outflows": 31850,
+      "agiIn": 72300,
+      "agiOut": 68400
+    },
+    "13135": {
+      "county": "Gwinnett County, GA",
+      "inflows": 22150,
+      "outflows": 19870,
+      "agiIn": 61400,
+      "agiOut": 57200
+    },
+    "13151": {
+      "county": "Henry County, GA",
+      "inflows": 7650,
+      "outflows": 6280,
+      "agiIn": 55800,
+      "agiOut": 52100
+    },
+    "18057": {
+      "county": "Hamilton County, IN",
+      "inflows": 8920,
+      "outflows": 6340,
+      "agiIn": 95200,
+      "agiOut": 78400
+    },
+    "18097": {
+      "county": "Marion County, IN",
+      "inflows": 18400,
+      "outflows": 21300,
+      "agiIn": 48900,
+      "agiOut": 55600
+    },
+    "24031": {
+      "county": "Montgomery County, MD",
+      "inflows": 22100,
+      "outflows": 26400,
+      "agiIn": 88500,
+      "agiOut": 95200
+    },
+    "34025": {
+      "county": "Monmouth County, NJ",
+      "inflows": 12800,
+      "outflows": 14200,
+      "agiIn": 92400,
+      "agiOut": 98700
+    },
+    "35013": {
+      "county": "Dona Ana County, NM",
+      "inflows": 4250,
+      "outflows": 4680,
+      "agiIn": 42100,
+      "agiOut": 46800
+    },
+    "36119": {
+      "county": "Westchester County, NY",
+      "inflows": 18600,
+      "outflows": 22400,
+      "agiIn": 112000,
+      "agiOut": 128500
+    },
+    "37119": {
+      "county": "Mecklenburg County, NC",
+      "inflows": 34200,
+      "outflows": 28600,
+      "agiIn": 78400,
+      "agiOut": 69200
+    },
+    "42077": {
+      "county": "Lehigh County, PA",
+      "inflows": 9450,
+      "outflows": 8820,
+      "agiIn": 56800,
+      "agiOut": 61200
+    },
+    "45077": {
+      "county": "Pickens County, SC",
+      "inflows": 3420,
+      "outflows": 3180,
+      "agiIn": 48200,
+      "agiOut": 44600
+    },
+    "47065": {
+      "county": "Hamilton County, TN",
+      "inflows": 7820,
+      "outflows": 6450,
+      "agiIn": 58900,
+      "agiOut": 52400
+    },
+    "48085": {
+      "county": "Collin County, TX",
+      "inflows": 24100,
+      "outflows": 17850,
+      "agiIn": 96400,
+      "agiOut": 82100
+    },
+    "48113": {
+      "county": "Dallas County, TX",
+      "inflows": 42350,
+      "outflows": 48920,
+      "agiIn": 65200,
+      "agiOut": 71800
+    },
+    "48121": {
+      "county": "Denton County, TX",
+      "inflows": 22480,
+      "outflows": 15340,
+      "agiIn": 84600,
+      "agiOut": 71200
+    },
+    "48439": {
+      "county": "Tarrant County, TX",
+      "inflows": 38720,
+      "outflows": 34580,
+      "agiIn": 68900,
+      "agiOut": 62400
+    },
+    "48453": {
+      "county": "Travis County, TX",
+      "inflows": 38400,
+      "outflows": 36200,
+      "agiIn": 89700,
+      "agiOut": 78500
+    },
+    "48491": {
+      "county": "Williamson County, TX",
+      "inflows": 15820,
+      "outflows": 9470,
+      "agiIn": 82300,
+      "agiOut": 71400
+    },
+    "51087": {
+      "county": "Henrico County, VA",
+      "inflows": 8950,
+      "outflows": 8120,
+      "agiIn": 62800,
+      "agiOut": 58400
+    },
+    "01073": {
+      "county": "Jefferson County, AL",
+      "inflows": 11200,
+      "outflows": 13800,
+      "agiIn": 52400,
+      "agiOut": 58100
+    }
+  }
+}

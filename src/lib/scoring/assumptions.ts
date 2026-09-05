@@ -7,12 +7,14 @@
  * which mirrors the workbook's Assumptions tab).
  */
 
-import type {
-  AssumptionRow,
-  BucketKey,
-  CriterionDef,
-  CriterionKind,
-  ProductType,
+import {
+  type AssumptionRow,
+  type BucketKey,
+  type CriterionDef,
+  type CriterionKind,
+  DEMOGRAPHIC_METRIC_BY_SLUG,
+  type DemographicMetricKey,
+  type ProductType,
 } from "./types";
 
 export interface Assumptions {
@@ -49,6 +51,20 @@ export interface Assumptions {
   demoBands: Record<ProductType, { go: number; nogo: number }>;
   /** Denominator converting a 0-100 dashboard score to criterion points. */
   demoScoreMax: number;
+  demo: {
+    /** ACS 5-year vintage. Also stamped into the demographics cache version. */
+    acsYear: number;
+    defaultRadiusMi: number;
+    /** Avalon's ungated MU raw score. MU scale is 100 / this. */
+    muAnchorRaw: number;
+    /** Per-profile metric weights. Each profile sums to 100. */
+    weights: Record<ProductType, Partial<Record<DemographicMetricKey, number>>>;
+    /** Gate floors. Only the metrics a profile gates on carry them. */
+    floors: Record<
+      ProductType,
+      Partial<Record<DemographicMetricKey, { soft: number; hard: number }>>
+    >;
+  };
   sensitivity: { commYocAxis: number[]; mfYocAxis: number[] };
   /** Annual cost escalation. Currently a placeholder — see `placeholders`. */
   cost: { escalationAnnual: number | null };
@@ -241,6 +257,19 @@ export function buildAssumptions(rows: readonly AssumptionRow[]): Assumptions {
       },
     },
     demoScoreMax: num("demo.score.max"),
+    demo: {
+      acsYear: num("demo.acs.year"),
+      defaultRadiusMi: num("demo.radius.default_mi"),
+      muAnchorRaw: num("demo.mu.anchor_raw"),
+      weights: {
+        mixed_use: demographicWeights(map, "mu"),
+        multifamily: demographicWeights(map, "mf"),
+      },
+      floors: {
+        mixed_use: demographicFloors(map, "mu"),
+        multifamily: demographicFloors(map, "mf"),
+      },
+    },
     sensitivity: {
       commYocAxis: numList("sensitivity.comm_yoc_axis"),
       mfYocAxis: numList("sensitivity.mf_yoc_axis"),
@@ -249,6 +278,73 @@ export function buildAssumptions(rows: readonly AssumptionRow[]): Assumptions {
     criteria: buildCriteria(map),
     placeholders,
   };
+}
+
+/** `demo.weight.<profile>.<metric_slug>` → the profile's weight map. */
+function demographicWeights(
+  map: ReadonlyMap<string, string>,
+  profile: "mu" | "mf",
+): Partial<Record<DemographicMetricKey, number>> {
+  const prefix = `demo.weight.${profile}.`;
+  const out: Partial<Record<DemographicMetricKey, number>> = {};
+
+  for (const [key, raw] of map) {
+    if (!key.startsWith(prefix)) continue;
+    const slug = key.slice(prefix.length);
+    const metric = DEMOGRAPHIC_METRIC_BY_SLUG[slug];
+    if (!metric) {
+      throw new AssumptionsError(`assumptions: unknown demographic metric "${slug}" in "${key}"`);
+    }
+    const value = Number(raw);
+    if (!Number.isFinite(value)) {
+      throw new AssumptionsError(`assumptions: "${key}" is not a finite number`);
+    }
+    out[metric] = value;
+  }
+
+  if (Object.keys(out).length === 0) {
+    throw new AssumptionsError(`assumptions: no ${prefix}* weights defined`);
+  }
+  return out;
+}
+
+/** `demo.floor.<profile>.<metric_slug>.<soft|hard>` → the profile's floors. */
+function demographicFloors(
+  map: ReadonlyMap<string, string>,
+  profile: "mu" | "mf",
+): Partial<Record<DemographicMetricKey, { soft: number; hard: number }>> {
+  const prefix = `demo.floor.${profile}.`;
+  const partial = new Map<DemographicMetricKey, { soft?: number; hard?: number }>();
+
+  for (const [key, raw] of map) {
+    if (!key.startsWith(prefix)) continue;
+    const rest = key.slice(prefix.length);
+    const dot = rest.lastIndexOf(".");
+    const slug = rest.slice(0, dot);
+    const bound = rest.slice(dot + 1);
+    const metric = DEMOGRAPHIC_METRIC_BY_SLUG[slug];
+    if (!metric || (bound !== "soft" && bound !== "hard")) {
+      throw new AssumptionsError(`assumptions: cannot parse floor key "${key}"`);
+    }
+    const value = Number(raw);
+    if (!Number.isFinite(value)) {
+      throw new AssumptionsError(`assumptions: "${key}" is not a finite number`);
+    }
+    const entry = partial.get(metric) ?? {};
+    entry[bound] = value;
+    partial.set(metric, entry);
+  }
+
+  const out: Partial<Record<DemographicMetricKey, { soft: number; hard: number }>> = {};
+  for (const [metric, entry] of partial) {
+    if (entry.soft === undefined || entry.hard === undefined) {
+      throw new AssumptionsError(
+        `assumptions: ${prefix}${metric} needs both a soft and a hard floor`,
+      );
+    }
+    out[metric] = { soft: entry.soft, hard: entry.hard };
+  }
+  return out;
 }
 
 const CRITERION_PREFIX = "criterion.";
@@ -354,6 +450,26 @@ export function validateAssumptions(assumptions: Assumptions): string[] {
 
   if (assumptions.verdict.watchMin > assumptions.verdict.goMin) {
     problems.push("verdict.watch_min is above verdict.go_min");
+  }
+
+  for (const [profile, slug] of [
+    ["mixed_use", "mu"],
+    ["multifamily", "mf"],
+  ] as const) {
+    const weights = assumptions.demo.weights[profile];
+    const total = Object.values(weights).reduce((sum, w) => sum + w, 0);
+    if (Math.abs(total - 100) > 1e-9) {
+      problems.push(`demo.weight.${slug}.* sums to ${total}, expected 100`);
+    }
+    for (const [metric, floors] of Object.entries(assumptions.demo.floors[profile])) {
+      if (floors.hard > floors.soft) {
+        problems.push(`demo.floor.${slug}.${metric}: hard floor is above soft`);
+      }
+    }
+  }
+
+  if (assumptions.demo.muAnchorRaw <= 0) {
+    problems.push("demo.mu.anchor_raw must be positive");
   }
 
   for (const type of ["mixed_use", "multifamily"] as const) {

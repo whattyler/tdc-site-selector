@@ -1,0 +1,134 @@
+[
+  {
+    "name": "Avalon",
+    "lat": 34.0705,
+    "lng": -84.2711,
+    "radiusMi": 3,
+    "acsYear": 2022,
+    "metrics": {
+      "avgIncome": 161689.90888486462,
+      "totalPop": 74089.33152223943,
+      "educationPct": 0.7087259692751428,
+      "discretionary": 137172.85422245128,
+      "migrationSignal": 0.3131241565452092,
+      "hhFormation": 0.3901618384572746,
+      "youngAdultPct": 0.18960081743442228,
+      "rentToIncome": 0.1516300852137367,
+      "primeRenterPct": 0.2315560633266394
+    },
+    "population": 74089.33152223943,
+    "counties": [
+      "13117",
+      "13121"
+    ],
+    "blockGroupCount": 68,
+    "recorded": {
+      "mu": 100,
+      "mf": 85,
+      "population": 70500
+    },
+    "computed": {
+      "mu": 100,
+      "mf": 86
+    }
+  },
+  {
+    "name": "Medley",
+    "lat": 34.0316536,
+    "lng": -84.1875997,
+    "radiusMi": 3,
+    "acsYear": 2022,
+    "metrics": {
+      "avgIncome": 163751.4894258903,
+      "totalPop": 75312.69946587241,
+      "educationPct": 0.6442503529027178,
+      "discretionary": 140309.3692094966,
+      "migrationSignal": 0.3131241565452092,
+      "hhFormation": 0.35035153450106005,
+      "youngAdultPct": 0.16220487727056007,
+      "rentToIncome": 0.14315668393967804,
+      "primeRenterPct": 0.19766998910186936
+    },
+    "population": 75312.69946587241,
+    "counties": [
+      "13117",
+      "13121",
+      "13135"
+    ],
+    "blockGroupCount": 67,
+    "recorded": {
+      "mu": 93,
+      "mf": 80,
+      "population": 56600
+    },
+    "computed": {
+      "mu": 96,
+      "mf": 83
+    }
+  },
+  {
+    "name": "Carmel IN",
+    "lat": 39.9653,
+    "lng": -86.1583,
+    "radiusMi": 3,
+    "acsYear": 2022,
+    "metrics": {
+      "avgIncome": 166052.37153766633,
+      "totalPop": 62270.8991397223,
+      "educationPct": 0.7068093995312451,
+      "discretionary": 147384.2825039144,
+      "migrationSignal": 1,
+      "hhFormation": 0.41242278361767454,
+      "youngAdultPct": 0.2023580527581593,
+      "rentToIncome": 0.11242289923885464,
+      "primeRenterPct": 0.20121599220685524
+    },
+    "population": 62270.8991397223,
+    "counties": [
+      "18057",
+      "18097"
+    ],
+    "blockGroupCount": 50,
+    "recorded": {
+      "mu": 101,
+      "mf": 85,
+      "population": 59900
+    },
+    "computed": {
+      "mu": 101,
+      "mf": 86
+    }
+  },
+  {
+    "name": "Overlook",
+    "lat": 34.2073,
+    "lng": -84.1402,
+    "radiusMi": 3,
+    "acsYear": 2022,
+    "metrics": {
+      "avgIncome": 126296.80104409244,
+      "totalPop": 36242.202555614414,
+      "educationPct": 0.4648303944854826,
+      "discretionary": 106617.05924346497,
+      "migrationSignal": 1,
+      "hhFormation": 0.3608329135492059,
+      "youngAdultPct": 0.20401649865895585,
+      "rentToIncome": 0.15582137978108349,
+      "primeRenterPct": 0.22367460790795063
+    },
+    "population": 36242.202555614414,
+    "counties": [
+      "13117"
+    ],
+    "blockGroupCount": 27,
+    "recorded": {
+      "mu": 16,
+      "mf": 55,
+      "population": 35200
+    },
+    "computed": {
+      "mu": 16,
+      "mf": 55
+    }
+  }
+]

@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 
+import { asset } from "@/lib/base-path";
 import { parseNumber } from "@/lib/format";
+import type { DemographicsResponse } from "@/app/api/demographics/route";
 import { type GeocodeResult, submarketFrom } from "@/lib/geocode";
 import {
   type Answer,
@@ -13,6 +15,7 @@ import {
   type FirstLookResult,
   type Gate2Result,
   PAD_RATE_KEYS,
+  type ScoredMetric,
   screenDeal,
 } from "@/lib/scoring";
 
@@ -51,6 +54,56 @@ export function ScreenPage({
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [probability, setProbability] = useState(assumptions.probability.default);
   const [fl, setFl] = useState<FirstLookFields>(EMPTY_FIRST_LOOK);
+  const [demoStatus, setDemoStatus] = useState<"idle" | "loading">("idle");
+  const [demoMetrics, setDemoMetrics] = useState<ScoredMetric[] | null>(null);
+
+  /**
+   * Pull MU/MF for a geocoded point. Fields stay editable throughout, and a
+   * failure says why rather than leaving zeros behind.
+   */
+  async function pullDemographics(lat: number, lng: number) {
+    setDemoStatus("loading");
+    try {
+      const response = await fetch(
+        `${asset("/api/demographics")}?lat=${lat}&lng=${lng}`,
+        { cache: "no-store" },
+      );
+      const payload = (await response.json()) as
+        | DemographicsResponse
+        | { error: string };
+
+      if (!response.ok || "error" in payload) {
+        setDemoStatus("idle");
+        setDeal((current) => ({
+          ...current,
+          demoSource: "failed",
+          demoDetail:
+            "error" in payload ? payload.error : "Could not reach the Census.",
+        }));
+        return;
+      }
+
+      setDemoStatus("idle");
+      setDemoMetrics(payload.metrics);
+      setDeal((current) => ({
+        ...current,
+        mu: String(payload.mu),
+        mf: String(payload.mf),
+        demoSource: "api",
+        demoDetail:
+          `ACS ${payload.acsYear} · ${payload.radius} mi · ` +
+          `pop ${payload.population.toLocaleString()} · ` +
+          `${payload.counties.length} count${payload.counties.length === 1 ? "y" : "ies"}`,
+      }));
+    } catch (error) {
+      setDemoStatus("idle");
+      setDeal((current) => ({
+        ...current,
+        demoSource: "failed",
+        demoDetail: error instanceof Error ? error.message : String(error),
+      }));
+    }
+  }
 
   // ── Demographics ────────────────────────────────────────────────────────
   const mu = parseNumber(deal.mu);
@@ -141,10 +194,19 @@ export function ScreenPage({
   const combined = combinedVerdict(screen.verdict, gate2);
 
   // ── Captions ────────────────────────────────────────────────────────────
+  const demographicsSource =
+    deal.demoSource === "api"
+      ? "pulled from the Census"
+      : deal.demoSource === "manual"
+        ? "typed by hand"
+        : deal.demoSource === "failed"
+          ? "pull failed, type them above"
+          : "geocode an address to pull them";
+
   const demographicsCaption =
     mu === null && mf === null
-      ? "Type the two dashboard scores above · Phase 4 pulls them by address"
-      : `typed from the dashboard · ${
+      ? `No scores yet · ${demographicsSource}`
+      : `${demographicsSource} · ${
           deal.productType === "auto"
             ? "set a product type to pick the governing score"
             : `governing ${demographics.governingScore ?? "—"} · GO ≥ ${demographics.goThreshold}, NO-GO ≤ ${demographics.nogoThreshold}`
@@ -173,7 +235,7 @@ export function ScreenPage({
               onChange={(key, value) =>
                 setDeal((current) => ({ ...current, [key]: value }))
               }
-              onGeocoded={(result: GeocodeResult) =>
+              onGeocoded={(result: GeocodeResult) => {
                 setDeal((current) => ({
                   ...current,
                   address: result.formattedAddress,
@@ -190,8 +252,21 @@ export function ScreenPage({
                   geohash7: result.geohash7,
                   county: result.county,
                   state: result.state,
+                }));
+                void pullDemographics(result.lat, result.lng);
+              }}
+              onDemographicEdit={(key, value) =>
+                setDeal((current) => ({
+                  ...current,
+                  [key]: value,
+                  demoSource: "manual",
+                  demoDetail:
+                    current.demoSource === "api"
+                      ? "Overridden after the Census pull"
+                      : null,
                 }))
               }
+              demographicsStatus={demoStatus}
               governing={
                 deal.productType === "mixed_use"
                   ? "Mixed-Use"
@@ -245,6 +320,7 @@ export function ScreenPage({
             mu={mu}
             mf={mf}
             resiUnits={parseNumber(fl.sanityMfUnits)}
+            demographicMetrics={demoMetrics}
           />
         </div>
       </div>

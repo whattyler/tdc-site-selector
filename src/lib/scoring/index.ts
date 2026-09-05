@@ -13,6 +13,7 @@ export type {
   ComponentKey,
   CriterionDef,
   CriterionKind,
+  DemographicMetricKey,
   DemographicBand,
   KnockoutResult,
   LandTest,
@@ -40,10 +41,18 @@ export {
 
 export {
   band,
+  type DemographicMetrics,
+  DemographicScoreError,
+  type DemographicScoreResult,
   type DemographicScores,
   type DemographicsResult,
   evaluateDemographics,
+  type FloorStatus,
   governingScore,
+  muRawScore,
+  type ProfileScore,
+  scoreDemographics,
+  type ScoredMetric,
 } from "./demographics";
 
 export {

@@ -31,6 +31,33 @@ demo.band.mixed_use.nogo,50,workbook:Assumptions!D51,2026-01-01
 demo.band.multifamily.go,70,workbook:Assumptions!C52,2026-01-01
 demo.band.multifamily.nogo,40,workbook:Assumptions!D52,2026-01-01
 demo.score.max,100,workbook:DealScreen!D15 MIN(3;score/100*3),2026-01-01
+demo.acs.year,2022,"ACS 2018-2022 five-year; matches the workbook Demographics tab and the dashboard's vintage",2026-09-04
+demo.radius.default_mi,3,workbook:Demographics!C7 three miles unless there is a reason to change it,2026-01-01
+demo.mu.anchor_raw,84.3885,"Avalon 2200 Avalon Blvd, ACS2022, computed 2026-09-04",2026-09-04
+demo.weight.mu.avg_income,30,dashboard:site-score.js MU_WEIGHTS (April 2026 revision),2026-09-04
+demo.weight.mu.education,25,dashboard:site-score.js MU_WEIGHTS (April 2026 revision),2026-09-04
+demo.weight.mu.total_pop,20,dashboard:site-score.js MU_WEIGHTS (April 2026 revision),2026-09-04
+demo.weight.mu.discretionary,10,dashboard:site-score.js MU_WEIGHTS (April 2026 revision),2026-09-04
+demo.weight.mu.young_adult,5,dashboard:site-score.js MU_WEIGHTS (April 2026 revision),2026-09-04
+demo.weight.mu.migration,5,dashboard:site-score.js MU_WEIGHTS (April 2026 revision),2026-09-04
+demo.weight.mu.hh_formation,5,dashboard:site-score.js MU_WEIGHTS (April 2026 revision),2026-09-04
+demo.weight.mf.avg_income,35,dashboard:site-score.js MF_WEIGHTS (May 2026 HHI-led reweight),2026-09-04
+demo.weight.mf.total_pop,25,dashboard:site-score.js MF_WEIGHTS (May 2026 HHI-led reweight),2026-09-04
+demo.weight.mf.education,15,dashboard:site-score.js MF_WEIGHTS (May 2026 HHI-led reweight),2026-09-04
+demo.weight.mf.discretionary,10,dashboard:site-score.js MF_WEIGHTS (May 2026 HHI-led reweight),2026-09-04
+demo.weight.mf.rent_to_income,5,dashboard:site-score.js MF_WEIGHTS (May 2026 HHI-led reweight),2026-09-04
+demo.weight.mf.prime_renter,5,dashboard:site-score.js MF_WEIGHTS (May 2026 HHI-led reweight),2026-09-04
+demo.weight.mf.migration,5,dashboard:site-score.js MF_WEIGHTS (May 2026 HHI-led reweight),2026-09-04
+demo.floor.mu.avg_income.soft,130000,dashboard:site-score.js COMPONENTS softFloor/hardFloor,2026-09-04
+demo.floor.mu.avg_income.hard,100000,dashboard:site-score.js COMPONENTS softFloor/hardFloor,2026-09-04
+demo.floor.mu.education.soft,0.50,dashboard:site-score.js COMPONENTS softFloor/hardFloor,2026-09-04
+demo.floor.mu.education.hard,0.35,dashboard:site-score.js COMPONENTS softFloor/hardFloor,2026-09-04
+demo.floor.mu.total_pop.soft,45000,dashboard:site-score.js COMPONENTS softFloor/hardFloor,2026-09-04
+demo.floor.mu.total_pop.hard,25000,dashboard:site-score.js COMPONENTS softFloor/hardFloor,2026-09-04
+demo.floor.mf.avg_income.soft,90000,dashboard:site-score.js COMPONENTS softFloor/hardFloor,2026-09-04
+demo.floor.mf.avg_income.hard,70000,dashboard:site-score.js COMPONENTS softFloor/hardFloor,2026-09-04
+demo.floor.mf.total_pop.soft,40000,dashboard:site-score.js COMPONENTS softFloor/hardFloor,2026-09-04
+demo.floor.mf.total_pop.hard,30000,dashboard:site-score.js COMPONENTS softFloor/hardFloor,2026-09-04
 sensitivity.comm_yoc_axis,"0.07,0.0725,0.075,0.0775,0.08",workbook:FirstLookUW!C48:G48,2026-01-01
 sensitivity.mf_yoc_axis,"0.06,0.0625,0.065,0.0675,0.07",workbook:FirstLookUW!B49:B53,2026-01-01
 cost.escalation.annual,0.04,placeholder,2026-09-01
