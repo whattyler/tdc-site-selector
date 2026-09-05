@@ -108,12 +108,16 @@ describe("assumptions", () => {
     expect(placeholderKeys(A)).toEqual([
       "cost.escalation.annual",
       "pad.rate.outparcel_per_parcel",
-      "pad.rate.townhome_per_lot",
     ]);
     expect(isPlaceholder(A, "pad.rate.hotel_per_key")).toBe(false);
     // A placeholder may still carry a stand-in number.
     expect(A.cost.escalationAnnual).toBe(0.04);
-    expect(A.pad.townhomePerLot).toBeNull();
+    expect(A.pad.outparcelPerParcel).toBeNull();
+  });
+
+  it("has a real townhome pad rate, sourced and no longer a placeholder", () => {
+    expect(isPlaceholder(A, "pad.rate.townhome_per_lot")).toBe(false);
+    expect(A.pad.townhomePerLot).toBe(75_000);
   });
 });
 
@@ -334,7 +338,7 @@ describe("first look", () => {
 
   it("refuses to price a parcel off a placeholder rate", () => {
     expect(() =>
-      padProceeds({ hotelKeys: 0, townhomeLots: 40, outparcels: 0 }, A),
+      padProceeds({ hotelKeys: 0, townhomeLots: 0, outparcels: 3 }, A),
     ).toThrow(PlaceholderAssumptionError);
 
     expect(() =>
@@ -352,23 +356,32 @@ describe("first look", () => {
     );
     expect(result.total).toBe(2_000_000);
     // The rate is reported as null rather than a misleading zero.
-    expect(result.lines.find((l) => l.parcel === "townhome")?.rate).toBeNull();
-    expect(result.lines.find((l) => l.parcel === "townhome")?.proceeds).toBe(0);
+    expect(result.lines.find((l) => l.parcel === "outparcel")?.rate).toBeNull();
+    expect(result.lines.find((l) => l.parcel === "outparcel")?.proceeds).toBe(0);
+  });
+
+  it("prices townhome lots off the real rate, no override needed", () => {
+    const result = padProceeds(
+      { hotelKeys: 0, townhomeLots: 40, outparcels: 0 },
+      A,
+    );
+    expect(result.total).toBe(40 * 75_000);
+    expect(result.lines.find((l) => l.parcel === "townhome")?.rate).toBe(75_000);
   });
 
   it("prices a placeholder parcel once a real rate is supplied", () => {
     const withRate: typeof A = {
       ...A,
-      pad: { ...A.pad, townhomePerLot: 55_000 },
+      pad: { ...A.pad, outparcelPerParcel: 900_000 },
       placeholders: new Set(
-        [...A.placeholders].filter((k) => k !== "pad.rate.townhome_per_lot"),
+        [...A.placeholders].filter((k) => k !== "pad.rate.outparcel_per_parcel"),
       ),
     };
     const result = padProceeds(
-      { hotelKeys: 0, townhomeLots: 40, outparcels: 0 },
+      { hotelKeys: 0, townhomeLots: 0, outparcels: 3 },
       withRate,
     );
-    expect(result.total).toBe(40 * 55_000);
+    expect(result.total).toBe(3 * 900_000);
   });
 
   it("adds pad proceeds back and carries the land", () => {

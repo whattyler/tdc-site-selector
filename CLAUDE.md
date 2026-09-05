@@ -12,7 +12,7 @@ src/lib/scoring    pure TS. No React, no DB, no fetch. Will become packages/scor
 src/lib/db         Drizzle schema + client. Will become packages/db
 src/lib/auth       NextAuth + Entra, requireRole. Will become packages/auth
 src/components     UI
-public/brand       logo files
+public             logo files
 tests/golden       JSON inputs + expected outputs from the 2026 Deal Filter workbook
 
 ## Rules
@@ -38,15 +38,33 @@ tests/golden       JSON inputs + expected outputs from the 2026 Deal Filter work
 ## Brand
 - Toro red: #C7202E. Used for the wordmark, primary action, GO state, active nav.
   Nowhere else.
-- Neutrals: near-black text (#1A1A1A), warm grays, white surfaces. No blue-tinted grays.
-- Semantic: GO = Toro red. MAYBE / INCOMPLETE = amber. NO-GO = charcoal, not a
-  second red.
-- Type: one sans, tight. Tabular figures on every number. Numbers right-aligned.
-- Logo: public/brand/toro-logo-red.png in the header, left. Never stretched, never
-  on red.
+- Dark blue-slate, default and only. No light theme. Page #1B1F24, cards #23282E,
+  zebra #2A3037, hover #313841, rules #343B44 / #46505B.
+- Text: #F2F3F4 for values and labels, #C2C7CD secondary, #858D96 captions only.
+  A grey number or field label is a bug.
+- Type: Alegreya (serif, 600–700) for the wordmark, section headers, bucket
+  headers and the verdict word. Carlito for everything else — body, table,
+  inputs, numbers. Carlito ships 400/700 only, so there is no medium weight;
+  hierarchy comes from colour and size. Tabular figures on every number.
+  Numbers right-aligned.
+- Semantic: GO = Toro red. MAYBE / WATCH / INCOMPLETE = amber (#D9A441 as text,
+  #B8860B as a fill with near-black on it). NO-GO = slate (#9AA3AD), never a
+  second red. Dead verdict states sit on #0F1215.
+- Logo: public/toro-logo-red.png in the header, left. Red-on-transparent, so it
+  works on slate. Never stretched, never on red.
 - Density: this is an underwriting tool, not a marketing page. Tables over cards.
   No hero sections, no gradients, no rounded-everything. Whitespace comes from
   margin, not padding.
 - Verdict panel is the one thing allowed to be loud.
 - Before building any new page: propose design tokens and an ASCII wireframe,
   stop, get approval, then build.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

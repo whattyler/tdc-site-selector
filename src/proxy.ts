@@ -23,7 +23,20 @@ function normalize(pathname: string): string {
   return pathname;
 }
 
+/**
+ * Local development escape hatch.
+ *
+ * Double-gated: it needs an explicit `AUTH_DEV_BYPASS=1` AND a non-production
+ * build, so it cannot be switched on by env var alone in Vercel. Exists so the
+ * page can be worked on before an Entra app registration is wired up. It is not
+ * a login — `auth()` still returns null, so the page renders with no user.
+ */
+const DEV_BYPASS =
+  process.env.NODE_ENV !== "production" && process.env.AUTH_DEV_BYPASS === "1";
+
 export default auth((req) => {
+  if (DEV_BYPASS) return;
+
   const pathname = normalize(req.nextUrl.pathname);
 
   // NextAuth's own routes must stay reachable or sign-in can never complete.

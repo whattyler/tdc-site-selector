@@ -23,7 +23,7 @@ land.rate.retail_psf,20,workbook:Assumptions!C35,2026-01-01
 land.rate.office_psf,20,workbook:Assumptions!C36,2026-01-01
 land.rate.multifamily_per_unit,40000,workbook:Assumptions!C37,2026-01-01
 pad.rate.hotel_per_key,20000,workbook:Assumptions!C41,2026-01-01
-pad.rate.townhome_per_lot,,placeholder,2026-01-01
+pad.rate.townhome_per_lot,75000,"TDC convention — raw pad. Medley sold 133 lots at $172,932 incl. sitework reimbursement, not representative",2026-09-04
 pad.rate.outparcel_per_parcel,,placeholder,2026-01-01
 product_type.max_retail_noi_share_for_mf,0.15,workbook:Assumptions!C47,2026-01-01
 demo.band.mixed_use.go,80,workbook:Assumptions!C51,2026-01-01

@@ -441,6 +441,8 @@ assumptions      key, value, source, asof      -- yields, land conventions, pads
 
 Address → Geocoding → lat/lng, formatted address, county, city, geohash. Map with pin. Distance Matrix from `HQ_LAT/LNG` (drive time, peak and off-peak) → shown in the panel and pre-fills Geography from `assumptions` bands (`≤30 = Yes`, `30–45 = Maybe`, `>45 = No`). Jurisdiction from geocode components. Acreage typed, or Regrid if on. Asking price typed.
 
+**Satellite aerial.** Top-right of the Deal section, Maps JS in `satellite` view centred on the geocoded pin. Scrollable — scroll to zoom, drag to pan — so the shape of the parcel and what surrounds it can be read without leaving the page. A click-out link opens the same coordinates in Google Maps in a new tab (`target="_blank" rel="noopener noreferrer"`) for anything the embed cannot do: Street View, measuring, directions. Browser key only, referrer-restricted, Maps JS alone — the server key never reaches the client. Phase 3.
+
 ### 2 · Demographics
 
 `fetchDemographics()` per A4, cached on `(geohash7, radius, version)`. Store mu, mf, population, and the nine metrics with weights so the page shows why. Bands from `assumptions`. Governing score follows product type exactly as the workbook does. Calibration chips: Avalon 100/85, Carmel 101/85, Medley 93/80, Overlook 16/55. If the call fails, fields become editable and `source = manual`. Never silently zero.
