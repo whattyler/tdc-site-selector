@@ -3,6 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import toroLogo from "../../../public/toro-logo-red.png";
+
 import { asset } from "@/lib/base-path";
 import { cn } from "@/lib/utils";
 
@@ -40,17 +42,29 @@ export function SiteHeader({
         {/* Baseline-aligned: an inline image's baseline is its bottom edge, so
             the wordmark and the product name sit on one line. */}
         <div className="flex min-w-0 items-baseline gap-3">
-          {/* Public assets are not basePath-rewritten, so the prefix is
-              explicit. Never stretched, never on red. */}
+          {/* Static import, not a /public URL.
+
+              The two environments disagree about where /public lives: `next
+              dev` serves it under the basePath, the Vercel deploy serves it at
+              the deployment root. No hardcoded string is right in both, and
+              next/image does not paper over it — prefixing by hand worked in
+              dev and 404'd in production, where the request fell through to
+              the auth proxy and came back a 302, which the browser rendered as
+              broken alt text.
+
+              A static import sidesteps the question. The file is emitted into
+              _next/static, whose URL Next builds itself and basePath-prefixes
+              correctly everywhere, and which the auth matcher already excludes
+              — so it cannot be shadowed by a redirect either. Width and height
+              come from the import, so the aspect ratio is guaranteed.
+              Never stretched, never on red. */}
           <Image
-            src={asset("/toro-logo-red.png")}
+            src={toroLogo}
             alt="Toro Development Company"
-            width={140}
-            height={28}
             priority
             className="shrink-0"
-            // Both dimensions set explicitly: sizing only one in CSS makes Next
-            // warn that the aspect ratio is no longer guaranteed.
+            // Height in CSS, width auto: the intrinsic dimensions come from the
+            // static import, so the ratio is fixed and Next does not warn.
             style={{ height: "1.75rem", width: "auto" }}
           />
 

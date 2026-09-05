@@ -248,11 +248,17 @@ Set manually in each Vercel project. Nothing goes in git.
 | `DEMOGRAPHICS_BYPASS_SECRET` | only if Deployment Protection is on there |
 | `VERCEL_TEAM_SLUG` | for the OIDC issuer |
 | `GOOGLE_MAPS_SERVER_KEY` | restricted by API (Geocoding, Places) and by IP if you pin one; used only in route handlers |
-| `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` | restricted by HTTP referrer to `tools.<domain>/*` and the `.vercel.app` preview pattern; Maps JS only |
+| `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` | restricted by HTTP referrer; Maps JS only. Set `https://tdc-site-selector.vercel.app/*` for the current production deploy, plus `https://tools.<domain>/*` once the custom domain is live and the `.vercel.app` preview pattern. `http://localhost:3000/*` for local work |
 | `ANTHROPIC_API_KEY` | direct. Not AI Gateway |
 | `REGRID_API_KEY` | optional, Phase 3b |
 
 Two Google keys on purpose. The browser key can only render maps; the server key can only be called from your functions.
+
+The browser key ships to every visitor in the page source, so the referrer list
+is the only thing standing between it and someone else’s bill. A missing
+production referrer does not fail loudly: Maps JS logs `RefererNotAllowedMapError`
+to the console and renders a blank or watermarked map, which is easy to mistake
+for a rendering bug.
 
 ## A8. CI and deploy
 
