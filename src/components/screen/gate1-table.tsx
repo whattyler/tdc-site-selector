@@ -32,7 +32,10 @@ const BUCKET_ORDER: BucketKey[] = ["real_estate", "site", "deal", "toro"];
  * control to the criterion name so the row cannot be answered backwards.
  */
 const ANSWER_LABELS: Record<string, readonly [string, string, string]> = {
-  geography: ["≤30 min", "30–45 min", ">45 min"],
+  // Not drive-time bands: nothing computes minutes any more, and the
+  // geography.band assumptions that backed those numbers were removed with the
+  // Distance Matrix. This is the platform-reach judgement B0 actually asks for.
+  geography: ["In market", "Edge", "Outside"],
   market: ["Strong", "Mixed", "Weak"],
   location: ["Prime", "Adequate", "Poor"],
   barriers_to_entry: ["High", "Some", "None"],
