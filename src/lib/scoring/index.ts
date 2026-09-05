@@ -40,6 +40,26 @@ export {
 } from "./combined";
 
 export {
+  allocateCostExLand,
+  availableSources,
+  BASIS_LABEL,
+  type CostAppliesTo,
+  type CostBasis,
+  type CostCategory,
+  type CostLibraryLine,
+  type CostProgram,
+  type CostResolution,
+  CostResolutionError,
+  type CostSelection,
+  type CostSource,
+  type CostTotals,
+  escalationYears,
+  isPercentageBasis,
+  resolveCosts,
+  type ResolvedCostLine,
+} from "./costs";
+
+export {
   band,
   type DemographicMetrics,
   DemographicScoreError,

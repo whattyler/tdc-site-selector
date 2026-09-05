@@ -9,11 +9,8 @@ import { FieldGrid, InputSection, NumberField, SubHead } from "./fields";
  */
 export type FirstLookFieldKey =
   | "retailNoi"
-  | "retailCost"
   | "officeNoi"
-  | "officeCost"
   | "mfNoi"
-  | "mfCost"
   | "hotelKeys"
   | "townhomeLots"
   | "outparcels"
@@ -26,11 +23,8 @@ export type FirstLookFields = Record<FirstLookFieldKey, string>;
 
 export const EMPTY_FIRST_LOOK: FirstLookFields = {
   retailNoi: "",
-  retailCost: "",
   officeNoi: "",
-  officeCost: "",
   mfNoi: "",
-  mfCost: "",
   hotelKeys: "",
   townhomeLots: "",
   outparcels: "",
@@ -61,7 +55,7 @@ export function FirstLookInputs({
     >
       <FieldGrid columns={4}>
         <SubHead>
-          Stabilized NOI and cost excluding land, all phases combined
+          Stabilized NOI, all phases combined. Cost ex-land is resolved by the Costs section above.
         </SubHead>
 
         <NumberField
@@ -71,34 +65,16 @@ export function FirstLookInputs({
           onChange={set("retailNoi")}
         />
         <NumberField
-          label="Retail cost ex-land"
-          prefix="$"
-          value={values.retailCost}
-          onChange={set("retailCost")}
-        />
-        <NumberField
           label="Office NOI"
           prefix="$"
           value={values.officeNoi}
           onChange={set("officeNoi")}
         />
         <NumberField
-          label="Office cost ex-land"
-          prefix="$"
-          value={values.officeCost}
-          onChange={set("officeCost")}
-        />
-        <NumberField
           label="Multifamily NOI"
           prefix="$"
           value={values.mfNoi}
           onChange={set("mfNoi")}
-        />
-        <NumberField
-          label="Multifamily cost ex-land"
-          prefix="$"
-          value={values.mfCost}
-          onChange={set("mfCost")}
         />
 
         <SubHead>Parcels sold rather than built</SubHead>

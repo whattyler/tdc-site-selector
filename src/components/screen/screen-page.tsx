@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { asset } from "@/lib/base-path";
 import { parseNumber } from "@/lib/format";
@@ -14,6 +14,9 @@ import {
   firstLook,
   type FirstLookResult,
   type Gate2Result,
+  allocateCostExLand,
+  type CostResolution,
+  type CostSelection,
   PAD_RATE_KEYS,
   type ScoredMetric,
   screenDeal,
@@ -26,10 +29,31 @@ import {
   type FirstLookFieldKey,
   type FirstLookFields,
 } from "./first-look-inputs";
+import { CostSection } from "./cost-section";
 import { Gate1Table } from "./gate1-table";
+import {
+  MEDLEY_PROGRAM,
+  ProgramInputs,
+  type ProgramFields,
+} from "./program-inputs";
 import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
 import { VerdictPanel } from "./verdict-panel";
+
+/**
+ * Medley carries 112,011 RSF of office, but the budget has no new office shell
+ * rate — Building 4000 is an existing-building renovation at $49/SF plus a
+ * $1.22M mechanical scope, which is ~$60/SF all in. Without this the default
+ * deal cannot resolve at all, because an unpriced line with a quantity throws.
+ */
+const DEFAULT_COST_SELECTIONS: Record<string, CostSelection> = {
+  office_shell: {
+    lineKey: "office_shell",
+    source: "custom",
+    multiplier: 1,
+    customRate: 60,
+  },
+};
 
 interface ScreenPageProps {
   assumptions: Assumptions;
@@ -56,6 +80,14 @@ export function ScreenPage({
   const [fl, setFl] = useState<FirstLookFields>(EMPTY_FIRST_LOOK);
   const [demoStatus, setDemoStatus] = useState<"idle" | "loading">("idle");
   const [demoMetrics, setDemoMetrics] = useState<ScoredMetric[] | null>(null);
+  const [program, setProgram] = useState<ProgramFields>(MEDLEY_PROGRAM);
+  const [costSelections, setCostSelections] =
+    useState<Record<string, CostSelection>>(DEFAULT_COST_SELECTIONS);
+  const [globalMultiplier, setGlobalMultiplier] = useState(1);
+  const [costs, setCosts] = useState<CostResolution | null>(null);
+  const [costError, setCostError] = useState<string | null>(null);
+  const [costLoading, setCostLoading] = useState(false);
+  const [libraryOrigin, setLibraryOrigin] = useState<string | null>(null);
 
   /**
    * Pull MU/MF for a geocoded point. Fields stay editable throughout, and a
@@ -105,6 +137,77 @@ export function ScreenPage({
     }
   }
 
+  // ── Costs ───────────────────────────────────────────────────────────────
+  const spaces = parseNumber(program.parkingSpaces) ?? 0;
+  // Structured and surface are separate library lines. "Mixed" splits evenly
+  // for now — a real split needs a field the program does not yet carry.
+  const structuredShare =
+    program.parkingType === "structured" ? 1 : program.parkingType === "mixed" ? 0.5 : 0;
+
+  const costProgram = {
+    resiUnits: parseNumber(program.resiUnits) ?? 0,
+    resiGsf: parseNumber(program.resiGsf) ?? 0,
+    retailSf: parseNumber(program.retailSf) ?? 0,
+    officeSf: parseNumber(program.officeSf) ?? 0,
+    parkingStructuredSpaces: Math.round(spaces * structuredShare),
+    parkingSurfaceSpaces: spaces - Math.round(spaces * structuredShare),
+    acreage: parseNumber(deal.acreage) ?? 0,
+  };
+  // Serialised so the effect re-runs on a value change, not on every render.
+  const costRequestKey = JSON.stringify({
+    costProgram,
+    costSelections,
+    globalMultiplier,
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    const { costProgram: p, costSelections: s, globalMultiplier: g } = JSON.parse(
+      costRequestKey,
+    ) as {
+      costProgram: typeof costProgram;
+      costSelections: Record<string, CostSelection>;
+      globalMultiplier: number;
+    };
+
+    setCostLoading(true);
+    fetch(asset("/api/costs"), {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        program: p,
+        selections: Object.values(s),
+        globalMultiplier: g,
+      }),
+      cache: "no-store",
+    })
+      .then(async (response) => {
+        const payload = (await response.json()) as
+          | (CostResolution & { libraryOrigin: string })
+          | { error: string };
+        if (cancelled) return;
+        setCostLoading(false);
+        if (!response.ok || "error" in payload) {
+          setCosts(null);
+          setCostError("error" in payload ? payload.error : "Cost resolution failed.");
+          return;
+        }
+        setCostError(null);
+        setLibraryOrigin(payload.libraryOrigin);
+        setCosts(payload);
+      })
+      .catch((cause: unknown) => {
+        if (cancelled) return;
+        setCostLoading(false);
+        setCosts(null);
+        setCostError(cause instanceof Error ? cause.message : String(cause));
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [costRequestKey]);
+
   // ── Demographics ────────────────────────────────────────────────────────
   const mu = parseNumber(deal.mu);
   const mf = parseNumber(deal.mf);
@@ -130,17 +233,16 @@ export function ScreenPage({
   );
 
   // ── Gate 2 ──────────────────────────────────────────────────────────────
-  const componentFields = [
-    fl.retailNoi,
-    fl.retailCost,
-    fl.officeNoi,
-    fl.officeCost,
-    fl.mfNoi,
-    fl.mfCost,
-  ];
+  const componentFields = [fl.retailNoi, fl.officeNoi, fl.mfNoi];
   const gate2Attempted = componentFields.some(
     (value) => parseNumber(value) !== null,
   );
+
+  // Cost ex-land is resolved, never typed. Split across the three components
+  // by direct attribution with the shared lines spread pro rata.
+  const allocated = costs
+    ? allocateCostExLand(costs, costProgram)
+    : { retail: 0, office: 0, multifamily: 0 };
 
   let firstLookResult: FirstLookResult | null = null;
   let gate2Error: string | null = null;
@@ -152,15 +254,15 @@ export function ScreenPage({
           components: {
             retail: {
               noi: parseNumber(fl.retailNoi) ?? 0,
-              costExLand: parseNumber(fl.retailCost) ?? 0,
+              costExLand: allocated.retail,
             },
             office: {
               noi: parseNumber(fl.officeNoi) ?? 0,
-              costExLand: parseNumber(fl.officeCost) ?? 0,
+              costExLand: allocated.office,
             },
             multifamily: {
               noi: parseNumber(fl.mfNoi) ?? 0,
-              costExLand: parseNumber(fl.mfCost) ?? 0,
+              costExLand: allocated.multifamily,
             },
           },
           pads: {
@@ -291,6 +393,45 @@ export function ScreenPage({
                 setNotes((current) => ({ ...current, [key]: value }))
               }
               onProbability={setProbability}
+            />
+
+            <ProgramInputs
+              values={program}
+              onChange={(key, value) =>
+                setProgram((current) => ({ ...current, [key]: value }))
+              }
+              acreage={parseNumber(deal.acreage)}
+            />
+
+            <CostSection
+              resolution={costs}
+              error={costError}
+              loading={costLoading}
+              libraryOrigin={libraryOrigin}
+              selections={costSelections}
+              globalMultiplier={globalMultiplier}
+              onSelection={(lineKey, patch) =>
+                setCostSelections((current) => {
+                  const existing = current[lineKey] ??
+                    costs?.lines.find((line) => line.lineKey === lineKey) ?? {
+                      lineKey,
+                      source: "custom" as const,
+                      multiplier: 1,
+                      customRate: null,
+                    };
+                  return {
+                    ...current,
+                    [lineKey]: {
+                      lineKey,
+                      source: existing.source,
+                      multiplier: existing.multiplier,
+                      customRate: "customRate" in existing ? existing.customRate : null,
+                      ...patch,
+                    },
+                  };
+                })
+              }
+              onGlobalMultiplier={setGlobalMultiplier}
             />
 
             <FirstLookInputs

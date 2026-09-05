@@ -62,9 +62,29 @@ export const costBasisEnum = pgEnum("cost_basis", [
   "per_office_sf",
   "per_space",
   "per_unit",
+  "per_acre",
   "pct_hard",
+  "pct_soft",
   "pct_total",
   "lump",
+]);
+
+/** Which subtotal a line rolls into. Not the same as its basis. */
+export const costCategoryEnum = pgEnum("cost_category", ["hard", "soft", "other"]);
+
+/**
+ * What a percentage line is a percentage *of*.
+ *
+ * Needed because a mixed-use deal carries two GC fees — a residential GMP fee
+ * and a commercial one — and applying both to the whole hard base would double
+ * count them at ~26%. Meaningless for the non-percentage bases.
+ */
+export const costAppliesToEnum = pgEnum("cost_applies_to", [
+  "resi_hard",
+  "commercial_hard",
+  "hard",
+  "soft",
+  "total",
 ]);
 
 export const compTypeEnum = pgEnum("comp_type", ["apartment", "retail", "office"]);
@@ -300,6 +320,11 @@ export const costLibrary = pgTable("cost_library", {
   lineKey: text("line_key").primaryKey(),
   label: text("label").notNull(),
   basis: costBasisEnum("basis").notNull(),
+  category: costCategoryEnum("category").notNull(),
+  /** Only meaningful for the `pct_*` bases. */
+  appliesTo: costAppliesToEnum("applies_to"),
+  /** Display order in the Costs section. */
+  sortOrder: integer("sort_order").notNull().default(0),
   medleyRate: numeric("medley_rate", {
     precision: 14,
     scale: 4,

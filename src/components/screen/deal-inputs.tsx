@@ -56,7 +56,9 @@ export const DEFAULT_DEAL: DealFields = {
   productType: "mixed_use",
   mu: "",
   mf: "",
-  acreage: "",
+  // Medley's site. Without it the per-acre sitework line resolves to zero and
+  // the default cost stack is ~$26M light.
+  acreage: "55.47",
   lat: null,
   lng: null,
   geohash7: null,

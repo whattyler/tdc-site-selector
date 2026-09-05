@@ -8,6 +8,13 @@
       "when": 1788493816921,
       "tag": "0000_lean_stardust",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788576864559,
+      "tag": "0001_nostalgic_vindicator",
+      "breakpoints": true
     }
   ]
 }
