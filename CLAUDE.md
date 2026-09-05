@@ -20,7 +20,9 @@ tests/golden       JSON inputs + expected outputs from the 2026 Deal Filter work
 - 18 scored criteria: 17 answered Yes/Maybe/No + Demographics computed. Probability
   is a multiplier, not a criterion. validateAssumptions enforces this.
 - Weights, KO flags, thresholds, yields, land conventions, pad rates, demographic
-  bands, geography bands, escalation rate: from the assumptions table. Never hardcoded.
+  bands, escalation rate: from the assumptions table. Never hardcoded.
+- No drive time, no Distance Matrix, no HQ origin. Geography is a plain answered
+  criterion.
 - Placeholder assumptions (source = "placeholder") throw if they reach a verdict.
 - Demographics are typed manually until Phase 4. No dashboard call yet.
 - cost_library rows never reach the client. Server returns resolved_rate and

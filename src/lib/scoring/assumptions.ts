@@ -49,7 +49,6 @@ export interface Assumptions {
   demoBands: Record<ProductType, { go: number; nogo: number }>;
   /** Denominator converting a 0-100 dashboard score to criterion points. */
   demoScoreMax: number;
-  geographyBands: { yesMaxMinutes: number; maybeMaxMinutes: number };
   sensitivity: { commYocAxis: number[]; mfYocAxis: number[] };
   /** Annual cost escalation. Currently a placeholder — see `placeholders`. */
   cost: { escalationAnnual: number | null };
@@ -242,10 +241,6 @@ export function buildAssumptions(rows: readonly AssumptionRow[]): Assumptions {
       },
     },
     demoScoreMax: num("demo.score.max"),
-    geographyBands: {
-      yesMaxMinutes: num("geography.band.yes_max_minutes"),
-      maybeMaxMinutes: num("geography.band.maybe_max_minutes"),
-    },
     sensitivity: {
       commYocAxis: numList("sensitivity.comm_yoc_axis"),
       mfYocAxis: numList("sensitivity.mf_yoc_axis"),
@@ -368,11 +363,6 @@ export function validateAssumptions(assumptions: Assumptions): string[] {
     }
   }
 
-  if (
-    assumptions.geographyBands.yesMaxMinutes >= assumptions.geographyBands.maybeMaxMinutes
-  ) {
-    problems.push("geography.band.yes_max_minutes is not below maybe_max_minutes");
-  }
 
   return problems;
 }

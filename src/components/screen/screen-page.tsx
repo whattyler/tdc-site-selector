@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { parseNumber } from "@/lib/format";
+import { type GeocodeResult, submarketFrom } from "@/lib/geocode";
 import {
   type Answer,
   type Assumptions,
@@ -11,7 +12,6 @@ import {
   firstLook,
   type FirstLookResult,
   type Gate2Result,
-  geographyAnswer,
   PAD_RATE_KEYS,
   screenDeal,
 } from "@/lib/scoring";
@@ -49,7 +49,6 @@ export function ScreenPage({
   const [deal, setDeal] = useState<DealFields>(EMPTY_DEAL);
   const [answers, setAnswers] = useState<Record<string, Answer>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
-  const [geographyOverridden, setGeographyOverridden] = useState(false);
   const [probability, setProbability] = useState(assumptions.probability.default);
   const [fl, setFl] = useState<FirstLookFields>(EMPTY_FIRST_LOOK);
 
@@ -62,22 +61,12 @@ export function ScreenPage({
     assumptions,
   );
 
-  // ── Geography pre-fill ──────────────────────────────────────────────────
-  // Drive time supplies the default. Once the user touches the control it is
-  // theirs, and changing the drive time no longer moves it.
-  const driveTime = parseNumber(deal.driveTimeMinutes);
-  const suggestedGeography = geographyAnswer(driveTime, assumptions);
-  const effectiveAnswers: Record<string, Answer> = {
-    ...answers,
-    geography: geographyOverridden
-      ? (answers.geography ?? null)
-      : suggestedGeography,
-  };
-
   // ── Gate 1 ──────────────────────────────────────────────────────────────
+  // Geography is a plain answered criterion: there is no drive time to
+  // pre-fill it from, and no Distance Matrix call behind it.
   const screen = screenDeal(
     {
-      answers: effectiveAnswers,
+      answers,
       demographics: {
         governingScore: demographics.governingScore,
         band: demographics.band,
@@ -127,7 +116,8 @@ export function ScreenPage({
             outparcels: parseNumber(fl.outparcels) ?? 0,
           },
           askingPrice: parseNumber(fl.askingPrice) ?? 0,
-          acreage: parseNumber(fl.acreage) ?? 0,
+          // Acreage is a site attribute, so it is typed in the Deal section.
+          acreage: parseNumber(deal.acreage) ?? 0,
           sanity: {
             retailSf: parseNumber(fl.sanityRetailSf) ?? 0,
             officeSf: parseNumber(fl.sanityOfficeSf) ?? 0,
@@ -160,13 +150,6 @@ export function ScreenPage({
             : `governing ${demographics.governingScore ?? "—"} · GO ≥ ${demographics.goThreshold}, NO-GO ≤ ${demographics.nogoThreshold}`
         }`;
 
-  const geographyCaption =
-    driveTime === null
-      ? "Type a drive time above to pre-fill · overridable"
-      : geographyOverridden
-        ? `drive ${driveTime} min from Alpharetta · overridden by hand`
-        : `drive ${driveTime} min from Alpharetta · pre-filled, overridable`;
-
   const demographicsDisplay =
     demographics.governingScore === null
       ? "—"
@@ -190,6 +173,25 @@ export function ScreenPage({
               onChange={(key, value) =>
                 setDeal((current) => ({ ...current, [key]: value }))
               }
+              onGeocoded={(result: GeocodeResult) =>
+                setDeal((current) => ({
+                  ...current,
+                  address: result.formattedAddress,
+                  // Only fill submarket if it is still empty or was itself
+                  // machine-filled — never overwrite something typed by hand.
+                  submarket:
+                    current.submarket.trim() === "" ||
+                    current.submarket === current.lastSubmarketFromGeocode
+                      ? submarketFrom(result)
+                      : current.submarket,
+                  lastSubmarketFromGeocode: submarketFrom(result),
+                  lat: result.lat,
+                  lng: result.lng,
+                  geohash7: result.geohash7,
+                  county: result.county,
+                  state: result.state,
+                }))
+              }
               governing={
                 deal.productType === "mixed_use"
                   ? "Mixed-Use"
@@ -206,12 +208,10 @@ export function ScreenPage({
               probabilityMin={assumptions.probability.min}
               probabilityMax={assumptions.probability.max}
               demographicsCaption={demographicsCaption}
-              geographyCaption={geographyCaption}
               demographicsDisplay={demographicsDisplay}
-              onAnswer={(key, value) => {
-                if (key === "geography") setGeographyOverridden(true);
-                setAnswers((current) => ({ ...current, [key]: value }));
-              }}
+              onAnswer={(key, value) =>
+                setAnswers((current) => ({ ...current, [key]: value }))
+              }
               onNote={(key, value) =>
                 setNotes((current) => ({ ...current, [key]: value }))
               }

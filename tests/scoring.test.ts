@@ -17,7 +17,6 @@ import {
   type DemographicBand,
   evaluateDemographics,
   firstLook,
-  geographyAnswer,
   isPlaceholder,
   padProceeds,
   placeholderKeys,
@@ -287,21 +286,6 @@ describe("deal screen", () => {
     const result = screen(answers("yes"), { score: 100, band: "GO" });
     expect(result.probability).toBe(A.probability.default);
     expect(result.probabilityWeightedScore).toBeCloseTo(75, 9);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Geography pre-fill
-// ---------------------------------------------------------------------------
-
-describe("geography pre-fill", () => {
-  it("bands drive time inclusively at each boundary", () => {
-    expect(geographyAnswer(0, A)).toBe("yes");
-    expect(geographyAnswer(30, A)).toBe("yes");
-    expect(geographyAnswer(30.1, A)).toBe("maybe");
-    expect(geographyAnswer(45, A)).toBe("maybe");
-    expect(geographyAnswer(45.1, A)).toBe("no");
-    expect(geographyAnswer(null, A)).toBeNull();
   });
 });
 

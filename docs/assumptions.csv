@@ -33,8 +33,6 @@ demo.band.multifamily.nogo,40,workbook:Assumptions!D52,2026-01-01
 demo.score.max,100,workbook:DealScreen!D15 MIN(3;score/100*3),2026-01-01
 sensitivity.comm_yoc_axis,"0.07,0.0725,0.075,0.0775,0.08",workbook:FirstLookUW!C48:G48,2026-01-01
 sensitivity.mf_yoc_axis,"0.06,0.0625,0.065,0.0675,0.07",workbook:FirstLookUW!B49:B53,2026-01-01
-geography.band.yes_max_minutes,30,spec:B5 section 1 drive time <=30 Yes,2026-09-03
-geography.band.maybe_max_minutes,45,spec:B5 section 1 drive time 30-45 Maybe,2026-09-03
 cost.escalation.annual,0.04,placeholder,2026-09-01
 criterion.demographics.label,Demographics,workbook:DealScreen!B15,2026-01-01
 criterion.demographics.bucket,real_estate,workbook:DealScreen!B14,2026-01-01

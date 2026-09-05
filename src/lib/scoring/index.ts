@@ -51,7 +51,6 @@ export {
   answeredCount,
   criterionPoints,
   type CriterionScore,
-  geographyAnswer,
   koCheck,
   scoreCriteria,
   screenDeal,

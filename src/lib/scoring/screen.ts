@@ -236,21 +236,3 @@ export function screenDeal(
     probabilityWeightedScore: score * probability,
   };
 }
-
-/**
- * Pre-fill the Geography answer from drive time to the site.
- *
- * Spec B5 section 1: at or under the Yes band it is a Yes, up to the Maybe band
- * it is a Maybe, beyond that a No. The user can override the result; this only
- * supplies the default.
- */
-export function geographyAnswer(
-  driveTimeMinutes: number | null,
-  assumptions: Assumptions,
-): Answer {
-  if (driveTimeMinutes === null || !Number.isFinite(driveTimeMinutes)) return null;
-  const { yesMaxMinutes, maybeMaxMinutes } = assumptions.geographyBands;
-  if (driveTimeMinutes <= yesMaxMinutes) return "yes";
-  if (driveTimeMinutes <= maybeMaxMinutes) return "maybe";
-  return "no";
-}

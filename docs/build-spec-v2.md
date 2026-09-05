@@ -237,11 +237,10 @@ Set manually in each Vercel project. Nothing goes in git.
 | `DEMOGRAPHICS_URL` | `https://demo.<domain>` |
 | `DEMOGRAPHICS_BYPASS_SECRET` | only if Deployment Protection is on there |
 | `VERCEL_TEAM_SLUG` | for the OIDC issuer |
-| `GOOGLE_MAPS_SERVER_KEY` | restricted by API (Geocoding, Places, Distance Matrix) and by IP if you pin one; used only in route handlers |
+| `GOOGLE_MAPS_SERVER_KEY` | restricted by API (Geocoding, Places) and by IP if you pin one; used only in route handlers |
 | `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` | restricted by HTTP referrer to `tools.<domain>/*` and the `.vercel.app` preview pattern; Maps JS only |
 | `ANTHROPIC_API_KEY` | direct. Not AI Gateway |
 | `REGRID_API_KEY` | optional, Phase 3b |
-| `HQ_LAT`, `HQ_LNG` | TDC Alpharetta, for drive time |
 
 Two Google keys on purpose. The browser key can only render maps; the server key can only be called from your functions.
 
@@ -341,7 +340,7 @@ The workbook already has the logic: 19 weighted criteria, five knockouts, 25% un
 |---|---|
 | First Look asks for NOI and cost ex-land as typed inputs | Builds both from a program, a cost library and a rent set |
 | Demographics score typed from the dashboard | Pulled from the dashboard by address (A4) |
-| Geography answered by hand | Drive time from Alpharetta computed, criterion pre-answered |
+| Geography answered from memory | Geocoded location and satellite aerial on the page while you answer it |
 | Competition / Market answered from memory | Nearby apartment and retail comps mapped and listed |
 | Costs are whatever you remember | Line-item library from Medley and Overlook/CCC, source and multiplier per line, budgets never exposed |
 | One deal at a time, paste to Pipeline | Every screen saved; pipeline is a view |
@@ -355,7 +354,7 @@ This is a first look, not the proforma tool. Separate project. They share `cost_
 | App | Next.js 16 App Router, TS, Tailwind, shadcn from `packages/ui` |
 | DB | Neon Postgres + Drizzle, schema in `packages/db` |
 | Auth | `packages/auth` (Entra). Roles: `admin` / `user` |
-| Maps | Google Maps Platform: Geocoding, Places (Nearby + Details), Distance Matrix, Maps JS. Server key in route handlers only |
+| Maps | Google Maps Platform: Geocoding, Places (Nearby + Details), Maps JS. Server key in route handlers only |
 | Parcel | Regrid API, optional (Phase 3b). Otherwise acreage typed |
 | Demographics | `/api/score` on the dashboard over OIDC (A4) |
 | AI | Anthropic API, direct. Comp rent drafting, memo prose. Never in the scoring path |
@@ -368,7 +367,7 @@ This is a first look, not the proforma tool. Separate project. They share `cost_
 ┌──────────────────────────────────────────────┬─────────────────────────┐
 │ 1  SITE                                       │  VERDICT (sticky)       │
 │    address ▸ geocode ▸ map, parcel, acreage   │  MU 84  ·  MF 71        │
-│    drive time from HQ, jurisdiction           │  Band: GO               │
+│    satellite aerial, jurisdiction             │  Band: GO               │
 │                                               │  Screen: 73  GO         │
 │ 2  DEMOGRAPHICS                               │  KO: PASS  Unk: 12%     │
 │    pulled from dashboard, metrics table       │  ───────────────        │
@@ -395,7 +394,7 @@ Criteria: John's 19, verbatim, in his four buckets.
 
 | Bucket | Criteria |
 |---|---|
-| Real Estate Considerations | Demographics (computed), Geography (pre-filled from drive time, overridable), Market, Location |
+| Real Estate Considerations | Demographics (computed), Geography, Market, Location |
 | Site Considerations | Barriers to Entry, Entitlements, Competition, Physical |
 | Deal Considerations | Seller Sophistication, Control, Market viability of all products, Partner Quality, Pursuit costs, Timing, Probability |
 | Toro Considerations | Brand fit, Capability, Capacity, Fee Potential |
@@ -439,7 +438,11 @@ assumptions      key, value, source, asof      -- yields, land conventions, pads
 
 ### 1 · Site
 
-Address → Geocoding → lat/lng, formatted address, county, city, geohash. Map with pin. Distance Matrix from `HQ_LAT/LNG` (drive time, peak and off-peak) → shown in the panel and pre-fills Geography from `assumptions` bands (`≤30 = Yes`, `30–45 = Maybe`, `>45 = No`). Jurisdiction from geocode components. Acreage typed, or Regrid if on. Asking price typed.
+Address → Geocoding → lat/lng, formatted address, city, county, state, geohash7. Submarket is filled from city and state; county shows under the address. Jurisdiction from geocode components. Acreage typed, or Regrid if on. Asking price typed.
+
+No drive time. There is no Distance Matrix call and no HQ origin — Geography is a plain answered criterion like the other sixteen, judged by a person looking at the map. The `geography.band.*` assumptions were removed with it.
+
+A geocode failure says so inline and leaves the typed address alone. Nothing about a bad lookup should cost you what you typed.
 
 **Satellite aerial.** Top-right of the Deal section, Maps JS in `satellite` view centred on the geocoded pin. Scrollable — scroll to zoom, drag to pan — so the shape of the parcel and what surrounds it can be read without leaving the page. A click-out link opens the same coordinates in Google Maps in a new tab (`target="_blank" rel="noopener noreferrer"`) for anything the embed cannot do: Street View, measuring, directions. Browser key only, referrer-restricted, Maps JS alone — the server key never reaches the client. Phase 3.
 
@@ -502,7 +505,7 @@ office NOI = RSF × rent × (1 − vac) − RSF × non-recoverable/SF
 
 ### 6 · Deal screen
 
-17 questions, four buckets, weights and KO flags from `assumptions`. Yes / Maybe / No control, note, who answered. Demographics row computed. Geography pre-filled, overridable. Probability slider 0.5–1.0. Everything the workbook does — 3/1/0, weighted score, unknown share, KO, band override, INCOMPLETE ceiling — in `packages/scoring/screen.ts`.
+17 questions, four buckets, weights and KO flags from `assumptions`. Yes / Maybe / No control, note, who answered. Demographics row computed. Geography answered like any other criterion. Probability slider 0.5–1.0. Everything the workbook does — 3/1/0, weighted score, unknown share, KO, band override, INCOMPLETE ceiling — in `packages/scoring/screen.ts`.
 
 ### Verdict panel
 
@@ -542,15 +545,17 @@ Golden tests: fill the workbook for three real deals (one GO, one NO-GO via knoc
 | 0 | Setup | Scaffold, Neon, `assumptions` seeded from the workbook | 1 |
 | 1 | Engine | `packages/scoring` ported, golden tests green | 2 |
 | 2 | Screen page | Section 6 + verdict panel, manual demographics. Ship | 2 |
-| 3 | Site | Geocode, map, drive time, Geography pre-fill. 3b Regrid | 1–2 |
+| 3 | Site | Geocode, satellite aerial, jurisdiction. 3b Regrid | 1–2 |
 | 4 | Demographics | Wire A4, metric table, manual fallback, cache | 1 |
 | 5 | Costs | Library, admin editor, resolver, escalation, multipliers, log | 2 + a day of pulling rates |
 | 6 | Revenue & comps | Places, comp table, NOI, AI draft | 2 |
 | 7 | First Look wired | Cost and NOI into residual; sensitivity drawer | 1 |
 | 8 | Output | PDF, pipeline view, save/compare | 2 |
-| 9 | Harden | Roles audit, Maps rate limits, log drain | 1 |
+| 9 | Harden | Roles audit, Maps rate limits, log drain, AdvancedMarkerElement | 1 |
 
 Ship after 2, again after 5.
+
+**Phase 9 — AdvancedMarkerElement.** The satellite aerial pin uses `google.maps.Marker`, deprecated February 2024. Google says it is not scheduled for discontinuation and will give 12 months' notice, so it stays for now; it logs one console warning per map. Migrating to `google.maps.marker.AdvancedMarkerElement` requires provisioning a **Map ID** in the Cloud Console and passing `mapId` to the map — do it when you are next in the console for the roles and rate-limit work, not before.
 
 ## B8. Where it'll bite
 

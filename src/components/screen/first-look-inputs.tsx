@@ -18,7 +18,6 @@ export type FirstLookFieldKey =
   | "townhomeLots"
   | "outparcels"
   | "askingPrice"
-  | "acreage"
   | "sanityRetailSf"
   | "sanityOfficeSf"
   | "sanityMfUnits";
@@ -36,7 +35,6 @@ export const EMPTY_FIRST_LOOK: FirstLookFields = {
   townhomeLots: "",
   outparcels: "",
   askingPrice: "",
-  acreage: "",
   sanityRetailSf: "",
   sanityOfficeSf: "",
   sanityMfUnits: "",
@@ -142,12 +140,6 @@ export function FirstLookInputs({
           prefix="$"
           value={values.askingPrice}
           onChange={set("askingPrice")}
-        />
-        <NumberField
-          label="Site acreage"
-          suffix="ac"
-          value={values.acreage}
-          onChange={set("acreage")}
         />
         <div />
         <div />

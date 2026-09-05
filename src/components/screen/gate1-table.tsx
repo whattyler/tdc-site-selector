@@ -58,7 +58,6 @@ interface Gate1TableProps {
   probabilityMin: number;
   probabilityMax: number;
   demographicsCaption: string;
-  geographyCaption: string;
   demographicsDisplay: string;
   onAnswer: (key: string, value: Answer) => void;
   onNote: (key: string, value: string) => void;
@@ -72,7 +71,6 @@ export function Gate1Table({
   probabilityMin,
   probabilityMax,
   demographicsCaption,
-  geographyCaption,
   demographicsDisplay,
   onAnswer,
   onNote,
@@ -136,7 +134,6 @@ export function Gate1Table({
                 startIndex={startIndex}
                 notes={notes}
                 demographicsCaption={demographicsCaption}
-                geographyCaption={geographyCaption}
                 demographicsDisplay={demographicsDisplay}
                 onAnswer={onAnswer}
                 onNote={onNote}
@@ -197,7 +194,6 @@ interface BucketGroupProps {
   startIndex: number;
   notes: Record<string, string>;
   demographicsCaption: string;
-  geographyCaption: string;
   demographicsDisplay: string;
   onAnswer: (key: string, value: Answer) => void;
   onNote: (key: string, value: string) => void;
@@ -211,7 +207,6 @@ function BucketGroup({
   startIndex,
   notes,
   demographicsCaption,
-  geographyCaption,
   demographicsDisplay,
   onAnswer,
   onNote,
@@ -256,10 +251,7 @@ function BucketGroup({
           labels={ANSWER_LABELS[row.key]}
           caption={
             row.key === "demographics"
-              ? demographicsCaption
-              : row.key === "geography"
-                ? geographyCaption
-                : undefined
+              ? demographicsCaption: undefined
           }
           computedDisplay={
             row.kind === "computed" ? demographicsDisplay : undefined
