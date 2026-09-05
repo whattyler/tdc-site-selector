@@ -80,7 +80,7 @@ export function SiteHeader({
               piece of page state, and the cheapest way to guarantee that is a
               fresh document. */}
           <a
-            href={asset("/")}
+            href={asset("/deals/new")}
             className="micro leading-none text-ink-2 hover:text-ink"
           >
             New deal

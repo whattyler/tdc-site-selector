@@ -15,8 +15,17 @@ import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
 
 import { roleForUpn, type Role } from "./roles";
 
-/** Basename NextAuth serves from, including the app's Next.js basePath. */
+/**
+ * The sign-in URL as a browser sees it, basePath included. Used by proxy.ts to
+ * build the redirect, and by anything else pointing a user at sign-in.
+ */
 export const AUTH_BASE_PATH = "/site-selector/api/auth";
+
+/**
+ * The app's Next.js basePath. The auth route handler puts this back on the
+ * request before NextAuth sees it — see that file for why.
+ */
+export const NEXT_BASE_PATH = "/site-selector";
 
 /** Tenant ID parsed out of the issuer URL, when it is a specific tenant. */
 function expectedTenantId(): string | null {

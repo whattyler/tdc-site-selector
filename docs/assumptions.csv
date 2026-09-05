@@ -60,7 +60,7 @@ demo.floor.mf.total_pop.soft,40000,dashboard:site-score.js COMPONENTS softFloor/
 demo.floor.mf.total_pop.hard,30000,dashboard:site-score.js COMPONENTS softFloor/hardFloor,2026-09-04
 sensitivity.comm_yoc_axis,"0.07,0.0725,0.075,0.0775,0.08",workbook:FirstLookUW!C48:G48,2026-01-01
 sensitivity.mf_yoc_axis,"0.06,0.0625,0.065,0.0675,0.07",workbook:FirstLookUW!B49:B53,2026-01-01
-cost.escalation.annual,0.04,placeholder,2026-09-01
+cost.escalation.annual,0.03,"TDC estimate, Atlanta 2023–2026",2026-09-05
 criterion.demographics.label,Demographics,workbook:DealScreen!B15,2026-01-01
 criterion.demographics.bucket,real_estate,workbook:DealScreen!B14,2026-01-01
 criterion.demographics.weight,10,workbook:DealScreen!E15,2026-01-01

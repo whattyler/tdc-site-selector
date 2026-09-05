@@ -62,7 +62,7 @@ export function PipelineTable({ deals }: { deals: PipelineRow[] }) {
           Screen a deal and press Save to pipeline, and it lands here.
         </p>
         <Link
-          href="/"
+          href="/deals/new"
           className="micro mt-4 inline-block border border-[var(--toro-red)] bg-[var(--toro-red)] px-3 py-1.5 text-white hover:bg-[var(--toro-red-hover)]"
         >
           New deal

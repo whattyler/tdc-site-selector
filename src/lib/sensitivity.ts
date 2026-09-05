@@ -8,6 +8,7 @@ import {
   type CostSelection,
   firstLook,
   type PadInput,
+  type PadSelections,
   type RevenueInputs,
   type SanityQuantities,
 } from "@/lib/scoring";
@@ -53,6 +54,9 @@ export interface CostRentGridInput {
   revenue: RevenueInputs;
   pads: PadInput;
   askingPrice: number;
+  incentives: number;
+  pricingDate: string;
+  padSelections: PadSelections;
   acreage: number;
   sanity: SanityQuantities;
   assumptions: Assumptions;
@@ -70,6 +74,7 @@ async function resolveAt(
       program: input.program,
       selections: input.selections,
       globalMultiplier,
+      pricingDate: input.pricingDate,
     }),
     cache: "no-store",
     signal,
@@ -145,6 +150,8 @@ export async function buildCostRentGrid(
             },
             pads: input.pads,
             askingPrice: input.askingPrice,
+            incentives: input.incentives,
+            padSelections: input.padSelections,
             acreage: input.acreage,
             sanity: input.sanity,
           },

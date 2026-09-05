@@ -26,6 +26,9 @@ import {
   type CostResolution,
   type CostSelection,
   PAD_RATE_KEYS,
+  type PadParcel,
+  type PadSelection,
+  type PadSelections,
   type ScoredMetric,
   screenDeal,
 } from "@/lib/scoring";
@@ -150,6 +153,13 @@ export function ScreenPage({
   >(initial?.costSelections ?? (demo ? DEFAULT_COST_SELECTIONS : {}));
   const [globalMultiplier, setGlobalMultiplier] = useState(
     initial?.globalMultiplier ?? 1,
+  );
+  // Defaults to today, so an unsaved deal prices at the moment it is screened.
+  const [pricingDate, setPricingDate] = useState(
+    initial?.pricingDate ?? new Date().toISOString().slice(0, 10),
+  );
+  const [padSelections, setPadSelections] = useState<PadSelections>(
+    initial?.padSelections ?? {},
   );
   const [costs, setCosts] = useState<CostResolution | null>(null);
   const [costError, setCostError] = useState<string | null>(null);
@@ -317,16 +327,21 @@ export function ScreenPage({
     costProgram,
     costSelections,
     globalMultiplier,
+    pricingDate,
   });
 
   useEffect(() => {
     let cancelled = false;
-    const { costProgram: p, costSelections: s, globalMultiplier: g } = JSON.parse(
-      costRequestKey,
-    ) as {
+    const {
+      costProgram: p,
+      costSelections: s,
+      globalMultiplier: g,
+      pricingDate: asOf,
+    } = JSON.parse(costRequestKey) as {
       costProgram: typeof costProgram;
       costSelections: Record<string, CostSelection>;
       globalMultiplier: number;
+      pricingDate: string;
     };
 
     setCostLoading(true);
@@ -337,6 +352,7 @@ export function ScreenPage({
         program: p,
         selections: Object.values(s),
         globalMultiplier: g,
+        pricingDate: asOf,
       }),
       cache: "no-store",
     })
@@ -447,6 +463,7 @@ export function ScreenPage({
     outparcels: parseNumber(fl.outparcels) ?? 0,
   };
   const askingPrice = parseNumber(fl.askingPrice) ?? 0;
+  const incentives = parseNumber(fl.incentives) ?? 0;
   const firstLookInput = {
     components: {
       retail: { noi: revenue.retail.noi ?? 0, costExLand: allocated.retail },
@@ -458,6 +475,8 @@ export function ScreenPage({
     },
     pads,
     askingPrice,
+    incentives,
+    padSelections,
     // Acreage is a site attribute, so it is typed in the Deal section.
     acreage: parseNumber(deal.acreage) ?? 0,
     sanity,
@@ -535,6 +554,9 @@ export function ScreenPage({
     },
     pads,
     askingPrice,
+    incentives,
+    pricingDate,
+    padSelections,
     acreage: parseNumber(deal.acreage) ?? 0,
     sanity,
   });
@@ -551,6 +573,9 @@ export function ScreenPage({
       >;
       pads: typeof pads;
       askingPrice: number;
+      incentives: number;
+      pricingDate: string;
+      padSelections: PadSelections;
       acreage: number;
       sanity: typeof sanity;
     };
@@ -570,6 +595,9 @@ export function ScreenPage({
         },
         pads: request.pads,
         askingPrice: request.askingPrice,
+        incentives: request.incentives,
+        pricingDate: request.pricingDate,
+        padSelections: request.padSelections,
         acreage: request.acreage,
         sanity: request.sanity,
         assumptions,
@@ -611,6 +639,8 @@ export function ScreenPage({
       program,
       costSelections,
       globalMultiplier,
+      pricingDate,
+      padSelections,
       rents,
       rentSources,
       firstLook: fl,
@@ -627,6 +657,8 @@ export function ScreenPage({
         probWeighted: screen.probabilityWeightedScore,
         totalNoi: firstLookResult?.totalNoi ?? null,
         totalCostExLand: firstLookResult?.totalCostExLand ?? null,
+        incentives: firstLookResult?.incentives ?? null,
+        netCostExLand: firstLookResult?.netCostExLand ?? null,
         maxLandPrice: firstLookResult?.maxLandPrice ?? null,
         headroomPctOfAsk: firstLookResult?.headroomPctOfAsk ?? null,
         yocOnCost: firstLookResult?.yocOnCost ?? null,
@@ -810,6 +842,8 @@ export function ScreenPage({
                 })
               }
               onGlobalMultiplier={setGlobalMultiplier}
+              pricingDate={pricingDate}
+              onPricingDate={setPricingDate}
             />
 
             <CompsSection
@@ -876,9 +910,23 @@ export function ScreenPage({
                 setFl((current) => ({ ...current, [key]: value }))
               }
               placeholderPads={{
+                hotel: assumptions.placeholders.has(PAD_RATE_KEYS.hotel),
                 townhome: assumptions.placeholders.has(PAD_RATE_KEYS.townhome),
                 outparcel: assumptions.placeholders.has(PAD_RATE_KEYS.outparcel),
               }}
+              padSelections={padSelections}
+              onPadSelection={(parcel: PadParcel, patch: Partial<PadSelection>) =>
+                setPadSelections((current) => ({
+                  ...current,
+                  [parcel]: {
+                    source: "convention",
+                    customRate: null,
+                    note: null,
+                    ...current[parcel],
+                    ...patch,
+                  },
+                }))
+              }
             />
 
             <p className="caption pb-8">

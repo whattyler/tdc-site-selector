@@ -4,6 +4,10 @@
  * Next 16 replaces `middleware.ts` with `proxy.ts`. Auth checks live here, on
  * the nodejs runtime, not in page components.
  *
+ * There is no development escape hatch. One existed while Entra was being set
+ * up; it is gone, because a gate with an off switch is a gate that will
+ * eventually be found switched off.
+ *
  * Path note: with `basePath` set, `req.nextUrl.pathname` is normally delivered
  * without the prefix, but a request arriving through the hub's rewrite can
  * carry it. Both forms are tolerated below rather than assuming one.
@@ -23,20 +27,7 @@ function normalize(pathname: string): string {
   return pathname;
 }
 
-/**
- * Local development escape hatch.
- *
- * Double-gated: it needs an explicit `AUTH_DEV_BYPASS=1` AND a non-production
- * build, so it cannot be switched on by env var alone in Vercel. Exists so the
- * page can be worked on before an Entra app registration is wired up. It is not
- * a login — `auth()` still returns null, so the page renders with no user.
- */
-const DEV_BYPASS =
-  process.env.NODE_ENV !== "production" && process.env.AUTH_DEV_BYPASS === "1";
-
 export default auth((req) => {
-  if (DEV_BYPASS) return;
-
   const pathname = normalize(req.nextUrl.pathname);
 
   // NextAuth's own routes must stay reachable or sign-in can never complete.
@@ -53,5 +44,8 @@ export default auth((req) => {
 // config in a proxy file — proxy already always runs on the Node.js runtime,
 // which is what that line was for.
 export const config = {
-  matcher: ["/((?!_next|favicon.ico).*)"],
+  // "/" is listed separately: after Next strips the basePath the app root
+  // arrives as a bare "/", which the catch-all below does not match. Without
+  // it the root is the one path that reaches the app ungated.
+  matcher: ["/", "/((?!_next|favicon.ico).*)"],
 };

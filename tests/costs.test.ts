@@ -107,16 +107,34 @@ describe("escalation", () => {
   it("compounds the assumption onto the rate", () => {
     const resolution = resolveCosts(LIBRARY, medleySelections(), MEDLEY, 1, A, TODAY);
     const shell = resolution.lines.find((l) => l.lineKey === "resi_shell");
-    // $123,009 at 2024-06-01, escalated ~2.26y at 4%.
-    const expected = 123_009 * Math.pow(1.04, escalationYears("2024-06-01", TODAY));
+    // $123,009 at 2024-06-01, escalated ~2.26y at 3%.
+    const expected = 123_009 * Math.pow(1.03, escalationYears("2024-06-01", TODAY));
     expect(shell?.resolvedRate).toBeCloseTo(expected, 2);
     expect(shell?.resolvedAmount).toBeCloseTo(expected * 340, 0);
   });
 
-  it("reports the escalation rate as a placeholder", () => {
+  it("escalates to the pricing date, not to today", () => {
+    // Same library, same program: only the date the rates are carried to moves.
+    const asOfSale = new Date("2024-06-01T00:00:00Z");
+    const atSale = resolveCosts(
+      LIBRARY, medleySelections(), MEDLEY, 1, A, asOfSale,
+    );
+    const today = resolveCosts(LIBRARY, medleySelections(), MEDLEY, 1, A, TODAY);
+
+    const shellAt = (r: typeof atSale) =>
+      r.lines.find((l) => l.lineKey === "resi_shell")?.resolvedRate ?? 0;
+
+    // The Medley resi shell is quoted at 2024-06-01, so pricing the deal on
+    // that date means no escalation at all.
+    expect(shellAt(atSale)).toBeCloseTo(123_009, 2);
+    expect(shellAt(today)).toBeGreaterThan(shellAt(atSale));
+    expect(atSale.totals.costExLand).toBeLessThan(today.totals.costExLand);
+  });
+
+  it("reports a real, sourced escalation rate", () => {
     const resolution = resolveCosts(LIBRARY, medleySelections(), MEDLEY, 1, A, TODAY);
-    expect(resolution.escalation.annual).toBe(0.04);
-    expect(resolution.escalation.isPlaceholder).toBe(true);
+    expect(resolution.escalation.annual).toBe(0.03);
+    expect(resolution.escalation.isPlaceholder).toBe(false);
   });
 });
 

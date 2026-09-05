@@ -1,0 +1,80 @@
+{
+  "name": "Incentives credit against cost ex-land",
+  "description": "A deal that fails the land test at full cost and clears it once a public incentive is credited. Hand-computed from the First Look formulas rather than transcribed from the workbook, because the workbook has no incentives row — this is the app extending it, so the arithmetic is written out here for a reader to check without running the engine.\n\nSupported cost = 3,000,000/0.075 + 1,000,000/0.075 + 6,500,000/0.065 = 40,000,000 + 13,333,333.333333334 + 100,000,000 = 153,333,333.33333334.\nCost ex-land 160,000,000 less incentives 25,000,000 = net cost 135,000,000.\nLand before carry = 153,333,333.33333334 - 135,000,000 = 18,333,333.333333343.\nMax land = that / 1.055 = 17,377,567.140600327.\nAsk 15,000,000, so the land test passes with headroom 2,377,567.1406003274.\nYoC on cost = 10,500,000 / 135,000,000 = 0.07777777777777778, against a blended hurdle of 10,500,000 / 153,333,333.33333334 = 0.06847826086956521. At full cost the same deal yields 6.5625% and max land is only -6,318,957.345971563, which is why the ask fails without the credit.",
+  "source": "Hand-computed. Incentives are an app addition; see docs/build-spec-v2.md B5 §4.",
+  "pending": false,
+  "tolerance": 1e-06,
+  "productType": "mixed_use",
+  "input": {
+    "demographics": {
+      "mu": 88,
+      "mf": 70
+    },
+    "screen": {
+      "probability": 0.75,
+      "answers": {
+        "geography": "yes",
+        "market": "yes",
+        "location": "yes",
+        "barriers_to_entry": "yes",
+        "entitlements": "yes",
+        "competition": "yes",
+        "physical": "yes",
+        "seller_sophistication": "yes",
+        "control": "yes",
+        "market_viability": "yes",
+        "partner_quality": "yes",
+        "pursuit_costs": "yes",
+        "timing": "yes",
+        "brand_fit": "yes",
+        "capability": "yes",
+        "capacity": "yes",
+        "fee_potential": "yes"
+      }
+    },
+    "firstLook": {
+      "components": {
+        "retail": {
+          "noi": 3000000,
+          "costExLand": 60000000
+        },
+        "office": {
+          "noi": 1000000,
+          "costExLand": 20000000
+        },
+        "multifamily": {
+          "noi": 6500000,
+          "costExLand": 80000000
+        }
+      },
+      "pads": {
+        "hotelKeys": 0,
+        "townhomeLots": 0,
+        "outparcels": 0
+      },
+      "askingPrice": 15000000,
+      "incentives": 25000000,
+      "acreage": 20,
+      "sanity": {
+        "retailSf": 100000,
+        "officeSf": 40000,
+        "multifamilyUnits": 400
+      }
+    }
+  },
+  "expected": {
+    "firstLook": {
+      "totalNoi": 10500000,
+      "totalCostExLand": 160000000,
+      "incentives": 25000000,
+      "netCostExLand": 135000000,
+      "totalCostSupported": 153333333.33333334,
+      "landValueBeforeCarry": 18333333.333333343,
+      "maxLandPrice": 17377567.140600327,
+      "headroom": 2377567.1406003274,
+      "landTest": "PASS",
+      "yocOnCost": 0.07777777777777778,
+      "blendedYoc": 0.06847826086956521
+    }
+  }
+}

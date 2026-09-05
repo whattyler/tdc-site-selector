@@ -4,6 +4,7 @@
 
 export {
   AUTH_BASE_PATH,
+  NEXT_BASE_PATH,
   auth,
   authOptions,
   handlers,

@@ -133,6 +133,23 @@ export const deals = pgTable(
       scale: 2,
       mode: "number",
     }),
+    /**
+     * Public money credited against cost ex-land: TAD/CID reimbursements,
+     * bond proceeds, abatement NPV. On the deal rather than in `cost_library`
+     * because it is negotiated per site, not a rate that describes a build.
+     */
+    incentives: numeric("incentives", {
+      precision: 16,
+      scale: 2,
+      mode: "number",
+    }),
+    incentivesNote: text("incentives_note"),
+    /**
+     * The date library rates are escalated to. Deal-level: it says when this
+     * deal is being priced, not anything about a particular rate. Null means
+     * price at whatever today is when it is opened.
+     */
+    costPricingDate: date("cost_pricing_date"),
     createdBy: text("created_by").notNull(),
     /** Who last pressed Save. Stamped on every write, not just the first. */
     updatedBy: text("updated_by"),
@@ -270,6 +287,17 @@ export const firstLookResults = pgTable("first_look_results", {
     scale: 2,
     mode: "number",
   }),
+  /** The credit applied, and the cost actually funded after it. */
+  incentives: numeric("fl_incentives", {
+    precision: 16,
+    scale: 2,
+    mode: "number",
+  }),
+  netCostExLand: numeric("net_cost_ex_land", {
+    precision: 16,
+    scale: 2,
+    mode: "number",
+  }),
   maxLandPrice: numeric("max_land_price", {
     precision: 16,
     scale: 2,
@@ -388,6 +416,36 @@ export const comps = pgTable(
   (table) => [index("comps_deal_id_idx").on(table.dealId)],
 );
 
+export const padSourceEnum = pgEnum("pad_source", ["convention", "custom"]);
+
+export const padParcelEnum = pgEnum("pad_parcel", [
+  "hotel",
+  "townhome",
+  "outparcel",
+]);
+
+/**
+ * Per-deal pad rate overrides. Mirrors `cost_lines`: the convention lives in
+ * assumptions, and a row here says this deal has a real contract instead.
+ */
+export const padLines = pgTable(
+  "pad_lines",
+  {
+    dealId: uuid("deal_id")
+      .notNull()
+      .references(() => deals.id, { onDelete: "cascade" }),
+    parcel: padParcelEnum("parcel").notNull(),
+    source: padSourceEnum("source").notNull().default("convention"),
+    customRate: numeric("custom_rate", {
+      precision: 14,
+      scale: 4,
+      mode: "number",
+    }),
+    note: text("note"),
+  },
+  (table) => [primaryKey({ columns: [table.dealId, table.parcel] })],
+);
+
 export const screenAnswers = pgTable(
   "screen_answers",
   {
@@ -472,6 +530,7 @@ export type RevenueRow = typeof revenue.$inferSelect;
 export type CostLine = typeof costLines.$inferSelect;
 export type Comp = typeof comps.$inferSelect;
 export type ScreenAnswer = typeof screenAnswers.$inferSelect;
+export type PadLine = typeof padLines.$inferSelect;
 export type ScreenResult = typeof screenResults.$inferSelect;
 export type FirstLookRow = typeof firstLookResults.$inferSelect;
 export type DemographicsCacheRow = typeof demographicsCache.$inferSelect;

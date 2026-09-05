@@ -55,6 +55,9 @@ interface CostSectionProps {
   globalMultiplier: number;
   onSelection: (lineKey: string, patch: Partial<CostSelection>) => void;
   onGlobalMultiplier: (value: number) => void;
+  /** YYYY-MM-DD. Every library rate is escalated to this date. */
+  pricingDate: string;
+  onPricingDate: (value: string) => void;
 }
 
 export function CostSection({
@@ -66,6 +69,8 @@ export function CostSection({
   globalMultiplier,
   onSelection,
   onGlobalMultiplier,
+  pricingDate,
+  onPricingDate,
 }: CostSectionProps) {
   const escalation = resolution?.escalation;
 
@@ -105,7 +110,18 @@ export function CostSection({
       {resolution && (
         <>
           <div className="mb-4 flex items-center gap-4 border-b border-line pb-3">
-            <span className="micro shrink-0">Global multiplier</span>
+            <span className="micro shrink-0">Priced as of</span>
+            {/* Deal-level, not per line: it says when this deal is being
+                priced. Each rate still escalates from its own as-of date. */}
+            <input
+              type="date"
+              value={pricingDate}
+              aria-label="Cost pricing date"
+              onChange={(event) => onPricingDate(event.target.value)}
+              className="num border-b border-line-strong bg-transparent px-0 py-1 text-ink focus:border-[var(--toro-red)] focus:outline-none"
+            />
+
+            <span className="micro shrink-0 pl-2">Global multiplier</span>
             <select
               value={globalMultiplier}
               onChange={(event) => onGlobalMultiplier(Number(event.target.value))}
@@ -117,7 +133,9 @@ export function CostSection({
                 </option>
               ))}
             </select>
-            <span className="caption">Applied on top of every line multiplier</span>
+            <span className="caption">
+              Applied on top of every line multiplier
+            </span>
           </div>
 
           <table className="w-full border-collapse text-left">

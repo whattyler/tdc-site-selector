@@ -26,6 +26,12 @@ export interface CostsRequest {
   program: CostProgram;
   selections: CostSelection[];
   globalMultiplier: number;
+  /**
+   * The date every library rate is escalated to, as YYYY-MM-DD. Absent means
+   * today. Deal-level rather than per-line: it is a statement about when this
+   * deal is being priced, not about any one rate.
+   */
+  pricingDate?: string;
 }
 
 export type CostsResponse = CostResolution & { libraryOrigin: string };
@@ -66,6 +72,19 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Parsed as UTC midnight so the same string gives the same escalation
+  // wherever the server happens to be.
+  const pricingDate =
+    payload.pricingDate && /^\d{4}-\d{2}-\d{2}$/.test(payload.pricingDate)
+      ? new Date(`${payload.pricingDate}T00:00:00Z`)
+      : new Date();
+  if (Number.isNaN(pricingDate.getTime())) {
+    return Response.json(
+      { error: "pricingDate must be YYYY-MM-DD." },
+      { status: 400 },
+    );
+  }
+
   const globalMultiplier = payload.globalMultiplier ?? 1;
   if (!Number.isFinite(globalMultiplier) || globalMultiplier <= 0) {
     return Response.json(
@@ -86,6 +105,7 @@ export async function POST(request: NextRequest) {
       payload.program,
       globalMultiplier,
       assumptions,
+      pricingDate,
     );
 
     return Response.json(

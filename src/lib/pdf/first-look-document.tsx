@@ -515,6 +515,7 @@ export function FirstLookDocument({
                   ["Hard costs", costs?.totals.hard],
                   ["Soft costs", costs?.totals.soft],
                   ["Financing and carry", costs?.totals.other],
+                  ["Incentives", firstLook ? -firstLook.incentives : undefined],
                 ] as const
               ).map(([label, value], index) => (
                 <View
@@ -529,15 +530,20 @@ export function FirstLookDocument({
               ))}
               <View style={[styles.row, { borderTopWidth: 1, borderTopColor: INK }]}>
                 <Text style={[styles.cell, { flex: 1, fontWeight: 700 }]}>
-                  Cost ex-land
+                  Net cost ex-land
                 </Text>
                 <Text style={[styles.numCell, { width: 70, fontWeight: 700 }]}>
-                  {costs === null ? "—" : compact(costs.totals.costExLand)}
+                  {firstLook ? compact(firstLook.netCostExLand) : "—"}
                 </Text>
               </View>
               <Text style={[styles.micro, { marginTop: 3 }]}>
                 Library rates stay on the server. Escalated and multiplied.
               </Text>
+              {snapshot.firstLook.incentivesNote.trim() !== "" && (
+                <Text style={[styles.micro, { marginTop: 2, color: INK_2 }]}>
+                  Incentives: {snapshot.firstLook.incentivesNote}
+                </Text>
+              )}
             </View>
           </View>
 

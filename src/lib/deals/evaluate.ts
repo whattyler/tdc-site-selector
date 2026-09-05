@@ -93,6 +93,11 @@ export function evaluateSnapshot(
       costProgram,
       snapshot.globalMultiplier,
       assumptions,
+      // The deal's own pricing date, so a report reprints the escalation the
+      // page showed rather than re-escalating to whenever it was printed.
+      snapshot.pricingDate
+        ? new Date(`${snapshot.pricingDate}T00:00:00Z`)
+        : new Date(),
     );
   } catch (error) {
     costError = error instanceof Error ? error.message : String(error);
@@ -160,6 +165,8 @@ export function evaluateSnapshot(
             outparcels: num(fl.outparcels) ?? 0,
           },
           askingPrice: num(fl.askingPrice) ?? 0,
+          incentives: num(fl.incentives) ?? 0,
+          padSelections: snapshot.padSelections,
           acreage: num(deal.acreage) ?? 0,
           sanity: {
             retailSf: costProgram.retailSf,

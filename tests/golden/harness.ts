@@ -83,6 +83,8 @@ export interface GoldenInput {
     >;
     pads: { hotelKeys: number; townhomeLots: number; outparcels: number };
     askingPrice: number;
+    /** Optional in a case file: a deal with no incentive simply omits it. */
+    incentives?: number;
     acreage: number;
     sanity: {
       retailSf: number;
@@ -124,8 +126,12 @@ export interface GoldenExpected {
   firstLook?: {
     totalNoi?: number;
     totalCostExLand?: number;
+    incentives?: number;
+    netCostExLand?: number;
     totalCostSupported?: number;
     blendedYoc?: number;
+    yocOnCost?: number;
+    yocGapBps?: number;
     padProceedsTotal?: number;
     landValueBeforeCarry?: number;
     maxLandPrice?: number;
@@ -228,7 +234,11 @@ export function runGoldenCase(
     assumptions,
   );
 
-  const result = firstLook(testCase.input.firstLook, assumptions);
+  const result = firstLook(
+    // A case file may omit `incentives`; most deals have none.
+    { incentives: 0, ...testCase.input.firstLook },
+    assumptions,
+  );
 
   return { demographics, screen, firstLook: result };
 }
@@ -329,8 +339,12 @@ export function toComparable(actual: GoldenActual) {
     firstLook: {
       totalNoi: actual.firstLook.totalNoi,
       totalCostExLand: actual.firstLook.totalCostExLand,
+      incentives: actual.firstLook.incentives,
+      netCostExLand: actual.firstLook.netCostExLand,
       totalCostSupported: actual.firstLook.totalCostSupported,
       blendedYoc: actual.firstLook.blendedYoc,
+      yocOnCost: actual.firstLook.yocOnCost,
+      yocGapBps: actual.firstLook.yocGapBps,
       padProceedsTotal: actual.firstLook.padProceeds.total,
       landValueBeforeCarry: actual.firstLook.landValueBeforeCarry,
       maxLandPrice: actual.firstLook.maxLandPrice,

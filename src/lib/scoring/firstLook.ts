@@ -47,6 +47,18 @@ export interface FirstLookInput {
   acreage: number;
   sanity: SanityQuantities;
   /**
+   * Public money that offsets what we have to fund: TAD and CID
+   * reimbursements, bond proceeds, the net present value of an abatement.
+   *
+   * A credit against cost, not income. It is deliberately not in the cost
+   * library — a library rate describes what something costs to build anywhere,
+   * whereas an incentive is negotiated for one site and belongs to the deal.
+   * 0 means none.
+   */
+  incentives: number;
+  /** Per-pad rate overrides. Absent parcels use the TDC convention. */
+  padSelections?: PadSelections;
+  /**
    * Per-component target yield overrides. The workbook pulls these from the
    * Assumptions tab but leaves the cells editable.
    */
@@ -62,11 +74,36 @@ export interface ComponentSupport {
   totalCostSupported: number;
 }
 
+export type PadParcel = "hotel" | "townhome" | "outparcel";
+
+/** Where a pad line's rate comes from. Same shape as a cost line's source. */
+export type PadSource = "convention" | "custom";
+
+/**
+ * A per-deal override of the TDC pad convention.
+ *
+ * The convention is what we assume a pad is worth anywhere; a real contract is
+ * what this one sold for. When a deal has the latter, the assumption is not a
+ * better number — so a custom rate also clears the placeholder guard, because
+ * the guard exists to stop the engine inventing a rate, not to stop someone
+ * supplying one.
+ */
+export interface PadSelection {
+  source: PadSource;
+  /** Only read when `source` is "custom". */
+  customRate: number | null;
+  note: string | null;
+}
+
+export type PadSelections = Partial<Record<PadParcel, PadSelection>>;
+
 export interface PadProceedsLine {
-  parcel: "hotel" | "townhome" | "outparcel";
+  parcel: PadParcel;
   quantity: number;
-  /** Null where the assumption has no rate. Only reachable at quantity 0. */
+  /** Null where neither the assumption nor a custom rate has one. */
   rate: number | null;
+  source: PadSource;
+  note: string | null;
   proceeds: number;
 }
 
@@ -75,7 +112,7 @@ export const PAD_RATE_KEYS = {
   hotel: "pad.rate.hotel_per_key",
   townhome: "pad.rate.townhome_per_lot",
   outparcel: "pad.rate.outparcel_per_parcel",
-} as const satisfies Record<PadProceedsLine["parcel"], string>;
+} as const satisfies Record<PadParcel, string>;
 
 export interface PadProceedsResult {
   lines: PadProceedsLine[];
@@ -95,7 +132,15 @@ export interface FirstLookResult {
   /** Step 1 — what the income supports. */
   support: ComponentSupport[];
   totalNoi: number;
+  /** Everything the build costs, before any incentive. */
   totalCostExLand: number;
+  /** The credit applied to it. */
+  incentives: number;
+  /**
+   * `totalCostExLand - incentives`. The number the residual is taken against,
+   * because it is what we actually have to fund.
+   */
+  netCostExLand: number;
   totalCostSupported: number;
   /** Blended hurdle implied by this component mix, not a fixed number. */
   blendedYoc: number;
@@ -104,6 +149,9 @@ export interface FirstLookResult {
    * implies. `blendedYoc` divides NOI by the cost the income *supports*, so it
    * always lands on the target by construction; this divides by the cost the
    * budget *is*. The two are the same number only when the deal exactly clears.
+   *
+   * Net of incentives, for the same reason the residual is: money we do not
+   * have to put in is not part of our cost. With no incentive it is unchanged.
    */
   yocOnCost: number;
   /** yocOnCost less blendedYoc, in basis points. Negative is short of the hurdle. */
@@ -195,17 +243,24 @@ export function componentSupport(
 export function padProceeds(
   pads: PadInput,
   assumptions: Assumptions,
+  selections: PadSelections = {},
 ): PadProceedsResult {
-  const line = (
-    parcel: PadProceedsLine["parcel"],
-    quantity: number,
-  ): PadProceedsLine => {
+  const line = (parcel: PadParcel, quantity: number): PadProceedsLine => {
     const key = PAD_RATE_KEYS[parcel];
-    const rate = assumptions.pad[PAD_FIELDS[parcel]];
+    const selection = selections[parcel];
+    const isCustom = selection?.source === "custom";
+    const note = selection?.note ?? null;
 
-    if (quantity === 0) return { parcel, quantity, rate, proceeds: 0 };
+    const rate = isCustom
+      ? (selection.customRate ?? null)
+      : assumptions.pad[PAD_FIELDS[parcel]];
+    const source: PadSource = isCustom ? "custom" : "convention";
 
-    if (assumptions.placeholders.has(key)) {
+    if (quantity === 0) return { parcel, quantity, rate, source, note, proceeds: 0 };
+
+    // A custom rate is a contract, so it answers the placeholder objection
+    // outright; only the convention path can be standing in for nothing.
+    if (!isCustom && assumptions.placeholders.has(key)) {
       throw new PlaceholderAssumptionError(
         key,
         `this deal has ${quantity} ${PAD_UNITS[parcel]} whose sale proceeds ` +
@@ -214,8 +269,11 @@ export function padProceeds(
     }
     if (rate === null) {
       throw new AssumptionsError(
-        `assumptions: "${key}" has no value, but this deal has ${quantity} ` +
-          `${PAD_UNITS[parcel]}`,
+        isCustom
+          ? `pad "${parcel}" is set to Custom with no rate, but this deal has ` +
+            `${quantity} ${PAD_UNITS[parcel]}`
+          : `assumptions: "${key}" has no value, but this deal has ${quantity} ` +
+            `${PAD_UNITS[parcel]}`,
       );
     }
 
@@ -226,6 +284,8 @@ export function padProceeds(
       parcel,
       quantity,
       rate,
+      source,
+      note,
       proceeds: Number.isFinite(proceeds) ? proceeds : 0,
     };
   };
@@ -361,15 +421,20 @@ export function firstLook(
     (sum, row) => sum + row.totalCostSupported,
     0,
   );
+  // Applied once, here, so every downstream number sees the same cost: the
+  // residual, the yield on cost, and the sensitivity grid.
+  const incentives = input.incentives;
+  const netCostExLand = totalCostExLand - incentives;
+
   const blendedYoc = safeDiv(totalNoi, totalCostSupported);
-  const yocOnCost = safeDiv(totalNoi, totalCostExLand);
+  const yocOnCost = safeDiv(totalNoi, netCostExLand);
   const yocGapBps = (yocOnCost - blendedYoc) * 10_000;
 
-  const pads = padProceeds(input.pads, assumptions);
+  const pads = padProceeds(input.pads, assumptions, input.padSelections);
 
   const land = maxLandPrice(
     totalCostSupported,
-    totalCostExLand,
+    netCostExLand,
     pads.total,
     assumptions,
   );
@@ -390,6 +455,8 @@ export function firstLook(
     support,
     totalNoi,
     totalCostExLand,
+    incentives,
+    netCostExLand,
     totalCostSupported,
     blendedYoc,
     yocOnCost,
@@ -412,9 +479,11 @@ export function firstLook(
     retailShareOfNoi: typeTest.retailShareOfNoi,
     productTypeTest: typeTest.suggested,
 
+    // Net, so the grid moves with the incentive rather than pricing a deal
+    // nobody is doing.
     sensitivity: sensitivityGrid(
       input.components,
-      totalCostExLand,
+      netCostExLand,
       pads.total,
       assumptions,
     ),

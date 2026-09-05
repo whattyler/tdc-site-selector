@@ -227,6 +227,16 @@ export function VerdictPanel({
             label="Cost ex-land"
             value={firstLook ? money(firstLook.totalCostExLand) : "—"}
           />
+          {/* Its own line, always, even at zero: a reader has to be able to see
+              that no incentive was assumed rather than infer it. */}
+          <DetailRow
+            label="Incentives"
+            value={firstLook ? money(-firstLook.incentives) : "—"}
+          />
+          <DetailRow
+            label="Net cost"
+            value={firstLook ? money(firstLook.netCostExLand) : "—"}
+          />
           <DetailRow
             label="Pad proceeds"
             value={firstLook ? money(firstLook.padProceeds.total) : "—"}

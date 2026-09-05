@@ -3,9 +3,10 @@ import { auth } from "@/lib/auth";
 /**
  * Who is saving. Spec B4.
  *
- * The dev bypass leaves `auth()` returning null on purpose — it is not a login.
- * Rather than write an empty string into `created_by`, a save made through the
- * bypass is stamped "dev", which is both honest and obvious in the pipeline.
+ * Every route is gated, so a save normally carries a real signed-in identity.
+ * "dev" is the fallback for the case where a session somehow reaches a write
+ * without one: an obviously wrong name in the pipeline beats an empty string
+ * in `created_by`.
  */
 export async function currentActor(): Promise<string> {
   const session = await auth();

@@ -12,6 +12,7 @@ import { getDb } from "@/lib/db/client";
 import {
   comps as compsTable,
   costLines,
+  padLines,
   deals,
   demographics,
   firstLookResults,
@@ -20,7 +21,14 @@ import {
   screenAnswers,
   screenResults,
 } from "@/lib/db/schema";
-import type { Answer, CostSelection, ScoredMetric } from "@/lib/scoring";
+import type {
+  Answer,
+  CostSelection,
+  PadParcel,
+  PadSelection,
+  PadSelections,
+  ScoredMetric,
+} from "@/lib/scoring";
 
 import type { DealSnapshot, PipelineRow } from "./snapshot";
 import { comparePipelineRows } from "./snapshot";
@@ -45,9 +53,18 @@ const num = (raw: string): number | null => {
 const str = (value: number | null | undefined): string =>
   value === null || value === undefined ? "" : String(value);
 
-/** Percentages live in the page as "6" and in the engine as 0.06. */
+/**
+ * Percentages live in the page as "6" and in the engine as 0.06.
+ *
+ * Rounded on the way out because binary floating point cannot hold 0.07: a
+ * saved 7% came back as "7.000000000000001" and rendered that way in the
+ * field. Six decimals is far finer than any vacancy anyone types and well
+ * inside the column's own scale.
+ */
 const pctToString = (value: number | null | undefined): string =>
-  value === null || value === undefined ? "" : String(value * 100);
+  value === null || value === undefined
+    ? ""
+    : String(Number((value * 100).toFixed(6)));
 
 const stringToPct = (raw: string): number | null => {
   const value = num(raw);
@@ -77,7 +94,10 @@ export async function saveDeal(
     submarket: deal.submarket || null,
     productType: deal.productType,
     askingPrice: num(firstLook.askingPrice),
+    incentives: num(firstLook.incentives),
+    incentivesNote: firstLook.incentivesNote.trim() || null,
     costGlobalMultiplier: snapshot.globalMultiplier,
+    costPricingDate: snapshot.pricingDate || null,
     updatedAt: now,
     updatedBy: who,
   };
@@ -191,6 +211,8 @@ export async function saveDeal(
     dealId: id,
     totalNoi: computed.totalNoi,
     totalCostExLand: computed.totalCostExLand,
+    incentives: computed.incentives,
+    netCostExLand: computed.netCostExLand,
     maxLandPrice: computed.maxLandPrice,
     headroomPctOfAsk: computed.headroomPctOfAsk,
     yocOnCost: computed.yocOnCost,
@@ -218,6 +240,28 @@ export async function saveDeal(
         source: line.source,
         multiplier: line.multiplier,
         customRate: line.customRate,
+      })),
+    );
+  }
+
+  await db.delete(padLines).where(eq(padLines.dealId, id));
+  const pads = Object.entries(snapshot.padSelections).filter(
+    // A pad left on the convention with nothing typed is the default; storing
+    // it would only make the absence of a row ambiguous.
+    ([, selection]) =>
+      selection !== undefined &&
+      (selection.source === "custom" ||
+        selection.customRate !== null ||
+        (selection.note ?? "") !== ""),
+  );
+  if (pads.length > 0) {
+    await db.insert(padLines).values(
+      pads.map(([parcel, selection]) => ({
+        dealId: id,
+        parcel: parcel as PadParcel,
+        source: selection!.source,
+        customRate: selection!.customRate,
+        note: selection!.note,
       })),
     );
   }
@@ -282,6 +326,7 @@ export async function loadDeal(id: string): Promise<DealSnapshot | null> {
     compRows,
     answerRows,
     screenRows,
+    padRows,
   ] = await Promise.all([
       db.select().from(demographics).where(eq(demographics.dealId, id)).limit(1),
       db.select().from(programs).where(eq(programs.dealId, id)).limit(1),
@@ -290,6 +335,7 @@ export async function loadDeal(id: string): Promise<DealSnapshot | null> {
       db.select().from(compsTable).where(eq(compsTable.dealId, id)),
       db.select().from(screenAnswers).where(eq(screenAnswers.dealId, id)),
       db.select().from(screenResults).where(eq(screenResults.dealId, id)).limit(1),
+      db.select().from(padLines).where(eq(padLines.dealId, id)),
     ]);
 
   const demo = demoRows[0];
@@ -408,6 +454,19 @@ export async function loadDeal(id: string): Promise<DealSnapshot | null> {
     program,
     costSelections,
     globalMultiplier: row.costGlobalMultiplier,
+    // A deal saved before pricing dates existed prices at today, which is what
+    // it did when it was saved.
+    pricingDate: row.costPricingDate ?? new Date().toISOString().slice(0, 10),
+    padSelections: Object.fromEntries(
+      padRows.map((pad) => [
+        pad.parcel,
+        {
+          source: pad.source,
+          customRate: pad.customRate,
+          note: pad.note,
+        } satisfies PadSelection,
+      ]),
+    ) as PadSelections,
     rents,
     rentSources: (rev?.rentSource ?? {}) as Partial<
       Record<RentFieldKey, RentSource>
@@ -417,6 +476,8 @@ export async function loadDeal(id: string): Promise<DealSnapshot | null> {
       townhomeLots: str(prog?.thLots),
       outparcels: str(prog?.outparcels),
       askingPrice: str(row.askingPrice),
+      incentives: str(row.incentives),
+      incentivesNote: row.incentivesNote ?? "",
     },
     comps,
     compsIncluded,
@@ -432,6 +493,8 @@ export async function loadDeal(id: string): Promise<DealSnapshot | null> {
       probWeighted: 0,
       totalNoi: null,
       totalCostExLand: null,
+      incentives: null,
+      netCostExLand: null,
       maxLandPrice: null,
       headroomPctOfAsk: null,
       yocOnCost: null,

@@ -29,6 +29,20 @@
       "when": 1788581227343,
       "tag": "0003_gifted_namor",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788630926140,
+      "tag": "0004_robust_wendell_vaughn",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788632741618,
+      "tag": "0005_omniscient_gamora",
+      "breakpoints": true
     }
   ]
 }

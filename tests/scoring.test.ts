@@ -103,15 +103,16 @@ describe("assumptions", () => {
     );
   });
 
-  it("marks the three stand-in values as placeholders", () => {
-    expect(placeholderKeys(A)).toEqual([
-      "cost.escalation.annual",
-      "pad.rate.outparcel_per_parcel",
-    ]);
+  it("marks the outparcel rate as the one remaining placeholder", () => {
+    expect(placeholderKeys(A)).toEqual(["pad.rate.outparcel_per_parcel"]);
     expect(isPlaceholder(A, "pad.rate.hotel_per_key")).toBe(false);
-    // A placeholder may still carry a stand-in number.
-    expect(A.cost.escalationAnnual).toBe(0.04);
+    // A placeholder may still carry a stand-in number; this one carries none.
     expect(A.pad.outparcelPerParcel).toBeNull();
+  });
+
+  it("has a real cost escalation rate, sourced and no longer a placeholder", () => {
+    expect(isPlaceholder(A, "cost.escalation.annual")).toBe(false);
+    expect(A.cost.escalationAnnual).toBe(0.03);
   });
 
   it("has a real townhome pad rate, sourced and no longer a placeholder", () => {
@@ -301,6 +302,7 @@ const DEAL = {
   },
   pads: { hotelKeys: 100, townhomeLots: 0, outparcels: 0 },
   askingPrice: 20_000_000,
+  incentives: 0,
   acreage: 25,
   sanity: { retailSf: 40_000, officeSf: 0, multifamilyUnits: 300 },
 };
@@ -390,6 +392,129 @@ describe("first look", () => {
         expect(scenario.maxLandPrice).toBeCloseTo(cells[mfIndex][commIndex], 6);
       });
     });
+  });
+
+  it("credits incentives against cost before taking the residual", () => {
+    const base = firstLook(DEAL, A);
+    const helped = firstLook({ ...DEAL, incentives: 10_000_000 }, A);
+
+    // Gross cost is untouched; only what we have to fund moves.
+    expect(helped.totalCostExLand).toBe(base.totalCostExLand);
+    expect(helped.incentives).toBe(10_000_000);
+    expect(helped.netCostExLand).toBe(base.totalCostExLand - 10_000_000);
+
+    // A credit against cost is worth its full value to the land, less carry.
+    expect(helped.maxLandPrice - base.maxLandPrice).toBeCloseTo(
+      10_000_000 / (1 + A.land.carryRate),
+      6,
+    );
+  });
+
+  it("raises yield on cost by the same credit, and the hurdle not at all", () => {
+    const base = firstLook(DEAL, A);
+    const helped = firstLook({ ...DEAL, incentives: 10_000_000 }, A);
+
+    expect(helped.yocOnCost).toBeCloseTo(
+      base.totalNoi / (base.totalCostExLand - 10_000_000),
+      12,
+    );
+    expect(helped.yocOnCost).toBeGreaterThan(base.yocOnCost);
+    // The hurdle is a property of the component mix, not of who pays for it.
+    expect(helped.blendedYoc).toBeCloseTo(base.blendedYoc, 12);
+    expect(helped.yocGapBps).toBeGreaterThan(base.yocGapBps);
+  });
+
+  it("moves the sensitivity grid with the credit, cell for cell", () => {
+    const base = firstLook(DEAL, A);
+    const helped = firstLook({ ...DEAL, incentives: 10_000_000 }, A);
+    const lift = 10_000_000 / (1 + A.land.carryRate);
+
+    helped.sensitivity.cells.forEach((row, mf) => {
+      row.forEach((value, comm) => {
+        expect(value - base.sensitivity.cells[mf][comm]).toBeCloseTo(lift, 6);
+      });
+    });
+  });
+
+  it("changes nothing when there is no incentive", () => {
+    const zero = firstLook({ ...DEAL, incentives: 0 }, A);
+    expect(zero.netCostExLand).toBe(zero.totalCostExLand);
+    expect(zero.yocOnCost).toBeCloseTo(
+      zero.totalNoi / zero.totalCostExLand,
+      12,
+    );
+  });
+
+  it("can flip a failing land test to a pass", () => {
+    // The base deal supports about $21.1M of land, so a $25M ask is short of
+    // it at full cost and comfortably inside it once the credit lands.
+    const tight = { ...DEAL, askingPrice: 25_000_000 };
+    const without = firstLook(tight, A);
+    expect(without.maxLandPrice).toBeLessThan(25_000_000);
+    expect(without.landTest).toBe("FAIL");
+
+    const withCredit = firstLook({ ...tight, incentives: 25_000_000 }, A);
+    expect(withCredit.maxLandPrice).toBeGreaterThan(25_000_000);
+    expect(withCredit.landTest).toBe("PASS");
+  });
+
+  it("prices a pad off a custom rate when one is set", () => {
+    const withPads = { ...DEAL, pads: { hotelKeys: 100, townhomeLots: 0, outparcels: 0 } };
+    const convention = firstLook(withPads, A);
+    const custom = firstLook(
+      {
+        ...withPads,
+        padSelections: {
+          hotel: { source: "custom", customRate: 37_000, note: "PF11" },
+        },
+      },
+      A,
+    );
+
+    const line = custom.padProceeds.lines.find((l) => l.parcel === "hotel");
+    expect(line?.source).toBe("custom");
+    expect(line?.rate).toBe(37_000);
+    expect(line?.note).toBe("PF11");
+    expect(custom.padProceeds.total).toBe(3_700_000);
+    expect(custom.padProceeds.total).not.toBe(convention.padProceeds.total);
+  });
+
+  it("lets a custom rate stand in for a placeholder convention", () => {
+    // The outparcel convention is a placeholder, so the convention path throws.
+    const withOutparcels = {
+      ...DEAL,
+      pads: { hotelKeys: 0, townhomeLots: 0, outparcels: 3 },
+    };
+    expect(() => firstLook(withOutparcels, A)).toThrow(
+      PlaceholderAssumptionError,
+    );
+
+    // A contract is not a stand-in, so it is allowed through.
+    const priced = firstLook(
+      {
+        ...withOutparcels,
+        padSelections: {
+          outparcel: { source: "custom", customRate: 900_000, note: "LOI" },
+        },
+      },
+      A,
+    );
+    expect(priced.padProceeds.total).toBe(2_700_000);
+  });
+
+  it("still refuses a Custom pad with no rate typed", () => {
+    expect(() =>
+      firstLook(
+        {
+          ...DEAL,
+          pads: { hotelKeys: 10, townhomeLots: 0, outparcels: 0 },
+          padSelections: {
+            hotel: { source: "custom", customRate: null, note: null },
+          },
+        },
+        A,
+      ),
+    ).toThrow(/set to Custom with no rate/);
   });
 
   it("refuses to price a parcel off a placeholder rate", () => {
@@ -528,6 +653,7 @@ describe("first look", () => {
         },
         pads: { hotelKeys: 0, townhomeLots: 0, outparcels: 0 },
         askingPrice: 0,
+        incentives: 0,
         acreage: 0,
         sanity: { retailSf: 0, officeSf: 0, multifamilyUnits: 0 },
       },

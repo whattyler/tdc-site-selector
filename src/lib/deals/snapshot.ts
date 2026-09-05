@@ -12,6 +12,7 @@ import type {
   CombinedVerdict,
   CostSelection,
   LandTest,
+  PadSelections,
   ScoredMetric,
   Verdict,
 } from "@/lib/scoring";
@@ -41,6 +42,8 @@ export interface DealComputed {
 
   totalNoi: number | null;
   totalCostExLand: number | null;
+  incentives: number | null;
+  netCostExLand: number | null;
   maxLandPrice: number | null;
   headroomPctOfAsk: number | null;
   yocOnCost: number | null;
@@ -60,6 +63,9 @@ export interface DealSnapshot {
   program: ProgramFields;
   costSelections: Record<string, CostSelection>;
   globalMultiplier: number;
+  /** YYYY-MM-DD. The date library rates are escalated to. */
+  pricingDate: string;
+  padSelections: PadSelections;
   rents: RentFields;
   rentSources: Partial<Record<RentFieldKey, RentSource>>;
   firstLook: FirstLookFields;
