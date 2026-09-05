@@ -21,6 +21,7 @@
     "vercel-build": "drizzle-kit migrate && next build"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.123.0",
     "@neondatabase/serverless": "^1.0.2",
     "@turf/area": "^7.4.0",
     "@turf/circle": "^7.4.0",

@@ -92,6 +92,13 @@ export {
 } from "./screen";
 
 export {
+  type ComponentNoi,
+  computeRevenue,
+  type RevenueInputs,
+  type RevenueResult,
+} from "./revenue";
+
+export {
   type ComponentInput,
   type ComponentInputs,
   componentSupport,

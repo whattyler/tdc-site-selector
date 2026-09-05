@@ -159,7 +159,12 @@ export function CostSection({
                         )}
                         style={{ height: "var(--row-h)" }}
                       >
-                        <td className="py-1 pr-3 text-ink" title={line.notes ?? undefined}>
+                        {/* Never wraps: the scope detail lives in the title,
+                            which is why the label is a plain name. */}
+                        <td
+                          className="whitespace-nowrap py-1 pr-3 text-ink"
+                          title={line.notes ?? undefined}
+                        >
                           {line.label}
                           <span className="caption ml-2">
                             {BASIS_LABEL[line.basis]}

@@ -1,41 +1,35 @@
 "use client";
 
-import { FieldGrid, InputSection, NumberField, SubHead } from "./fields";
+import { money } from "@/lib/format";
+
+import { DerivedField, FieldGrid, InputSection, NumberField, SubHead } from "./fields";
 
 /**
- * Manual First Look entry for Phase 2. Phases 3–7 replace the component NOI
- * and cost fields with the program, cost library and comps that build them.
- * The land basis, acreage and sanity quantities stay typed either way.
+ * First Look entry. Component NOI now derives from Revenue and cost ex-land
+ * from Costs, so what is left to type is the land itself: the pads sold rather
+ * than built, and the price being asked for the dirt.
  */
 export type FirstLookFieldKey =
-  | "retailNoi"
-  | "officeNoi"
-  | "mfNoi"
   | "hotelKeys"
   | "townhomeLots"
   | "outparcels"
-  | "askingPrice"
-  | "sanityRetailSf"
-  | "sanityOfficeSf"
-  | "sanityMfUnits";
+  | "askingPrice";
 
 export type FirstLookFields = Record<FirstLookFieldKey, string>;
 
 export const EMPTY_FIRST_LOOK: FirstLookFields = {
-  retailNoi: "",
-  officeNoi: "",
-  mfNoi: "",
   hotelKeys: "",
   townhomeLots: "",
   outparcels: "",
   askingPrice: "",
-  sanityRetailSf: "",
-  sanityOfficeSf: "",
-  sanityMfUnits: "",
 };
 
 interface FirstLookInputsProps {
   values: FirstLookFields;
+  /** Derived from Program, not typed. Spec B5 §4. */
+  sanity: { retailSf: number; officeSf: number; multifamilyUnits: number };
+  /** Derived from Revenue. Null where the component has no rent. Spec B5 §5. */
+  noi: { retail: number | null; office: number | null; multifamily: number | null };
   onChange: (key: FirstLookFieldKey, value: string) => void;
   /** Placeholder pad rates that would throw if the quantity goes above zero. */
   placeholderPads: { townhome: boolean; outparcel: boolean };
@@ -43,6 +37,8 @@ interface FirstLookInputsProps {
 
 export function FirstLookInputs({
   values,
+  sanity,
+  noi,
   onChange,
   placeholderPads,
 }: FirstLookInputsProps) {
@@ -51,31 +47,33 @@ export function FirstLookInputs({
   return (
     <InputSection
       title="Gate 2 · First Look"
-      note="Typed for now — Phases 3–7 build these"
+      note="NOI from Revenue, cost from Costs"
     >
       <FieldGrid columns={4}>
         <SubHead>
-          Stabilized NOI, all phases combined. Cost ex-land is resolved by the Costs section above.
+          Stabilized NOI, all phases combined. Built by the Revenue section above;
+          cost ex-land is resolved by Costs.
         </SubHead>
 
-        <NumberField
+        <DerivedField
           label="Retail NOI"
-          prefix="$"
-          value={values.retailNoi}
-          onChange={set("retailNoi")}
+          from="Revenue"
+          value={noi.retail}
+          format={money}
         />
-        <NumberField
+        <DerivedField
           label="Office NOI"
-          prefix="$"
-          value={values.officeNoi}
-          onChange={set("officeNoi")}
+          from="Revenue"
+          value={noi.office}
+          format={money}
         />
-        <NumberField
+        <DerivedField
           label="Multifamily NOI"
-          prefix="$"
-          value={values.mfNoi}
-          onChange={set("mfNoi")}
+          from="Revenue"
+          value={noi.multifamily}
+          format={money}
         />
+        <div />
 
         <SubHead>Parcels sold rather than built</SubHead>
 
@@ -122,25 +120,9 @@ export function FirstLookInputs({
 
         <SubHead>Sanity check — quantities at TDC land conventions</SubHead>
 
-        <NumberField
-          label="Retail"
-          suffix="SF"
-          value={values.sanityRetailSf}
-          onChange={set("sanityRetailSf")}
-        />
-        <NumberField
-          label="Office"
-          suffix="SF"
-          value={values.sanityOfficeSf}
-          onChange={set("sanityOfficeSf")}
-        />
-        <NumberField
-          label="Multifamily"
-          suffix="units"
-          value={values.sanityMfUnits}
-          onChange={set("sanityMfUnits")}
-          hint="Also drives $/unit in the panel"
-        />
+        <DerivedField label="Retail" suffix="SF" value={sanity.retailSf} />
+        <DerivedField label="Office" suffix="SF" value={sanity.officeSf} />
+        <DerivedField label="Multifamily" suffix="units" value={sanity.multifamilyUnits} />
         <div />
       </FieldGrid>
     </InputSection>

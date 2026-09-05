@@ -13,6 +13,8 @@ import { useParcelLookup } from "@/lib/parcel";
 import type { ProductTypeSetting } from "@/lib/scoring";
 import { cn } from "@/lib/utils";
 
+import type { Comp } from "@/app/api/comps/route";
+
 import { FieldGrid, InputSection, NumberField, SelectField, TextField } from "./fields";
 import { SatelliteAerial } from "./satellite-aerial";
 
@@ -85,6 +87,9 @@ interface DealInputsProps {
   demographicsStatus: "idle" | "loading";
   /** What the product type selects, for the hint under the score fields. */
   governing: "Mixed-Use" | "Multifamily" | "neither";
+  /** Drawn on the aerial's road-map view. Spec B5 §5. */
+  comps?: Comp[];
+  includedCompIds?: ReadonlySet<string>;
 }
 
 export function DealInputs({
@@ -94,6 +99,8 @@ export function DealInputs({
   onDemographicEdit,
   demographicsStatus,
   governing,
+  comps,
+  includedCompIds,
 }: DealInputsProps) {
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -292,6 +299,8 @@ export function DealInputs({
           lat={values.lat}
           lng={values.lng}
           label={values.name || values.address || "Site"}
+          comps={comps}
+          includedCompIds={includedCompIds}
         />
       </div>
     </InputSection>

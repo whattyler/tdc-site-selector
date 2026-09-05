@@ -4,12 +4,19 @@ import { useEffect, useState } from "react";
 
 import { asset } from "@/lib/base-path";
 import { parseNumber } from "@/lib/format";
+import type { Comp, CompsResponse } from "@/app/api/comps/route";
 import type { DemographicsResponse } from "@/app/api/demographics/route";
+import type {
+  RentDraft,
+  RentDraftField,
+  RentDraftResponse,
+} from "@/app/api/rent-draft/route";
 import { type GeocodeResult, submarketFrom } from "@/lib/geocode";
 import {
   type Answer,
   type Assumptions,
   combinedVerdict,
+  computeRevenue,
   evaluateDemographics,
   firstLook,
   type FirstLookResult,
@@ -31,6 +38,16 @@ import {
 } from "./first-look-inputs";
 import { CostSection } from "./cost-section";
 import { Gate1Table } from "./gate1-table";
+import {
+  compIncluded,
+  CompsSection,
+  DRAFT_TARGET,
+  EMPTY_RENTS,
+  type RentFieldKey,
+  type RentFields,
+  type RentSource,
+  RevenueSection,
+} from "./revenue-section";
 import {
   MEDLEY_PROGRAM,
   ProgramInputs,
@@ -88,6 +105,21 @@ export function ScreenPage({
   const [costError, setCostError] = useState<string | null>(null);
   const [costLoading, setCostLoading] = useState(false);
   const [libraryOrigin, setLibraryOrigin] = useState<string | null>(null);
+  const [comps, setComps] = useState<Comp[] | null>(null);
+  const [compsError, setCompsError] = useState<string | null>(null);
+  const [compsLoading, setCompsLoading] = useState(false);
+  // Absent means "untouched", which resolves to the default in `compIncluded`:
+  // ticked, unless the comp is below the ratings floor.
+  const [compsIncluded, setCompsIncluded] = useState<Record<string, boolean>>({});
+  const [rents, setRents] = useState<RentFields>(EMPTY_RENTS);
+  const [rentSources, setRentSources] = useState<
+    Partial<Record<RentFieldKey, RentSource>>
+  >({});
+  const [drafts, setDrafts] = useState<RentDraft[] | null>(null);
+  const [draftNotes, setDraftNotes] = useState<string | null>(null);
+  const [draftError, setDraftError] = useState<string | null>(null);
+  const [draftLoading, setDraftLoading] = useState(false);
+  const [draftModel, setDraftModel] = useState<string | null>(null);
 
   /**
    * Pull MU/MF for a geocoded point. Fields stay editable throughout, and a
@@ -134,6 +166,77 @@ export function ScreenPage({
         demoSource: "failed",
         demoDetail: error instanceof Error ? error.message : String(error),
       }));
+    }
+  }
+
+  /**
+   * Nearby apartment complexes and retail centres. Runs off the same geocode
+   * the demographics do; the radius matches the demographic radius so the two
+   * are describing the same neighbourhood.
+   */
+  async function pullComps(lat: number, lng: number) {
+    setCompsLoading(true);
+    setCompsError(null);
+    try {
+      const response = await fetch(
+        `${asset("/api/comps")}?lat=${lat}&lng=${lng}&radius=${assumptions.demo.defaultRadiusMi}`,
+        { cache: "no-store" },
+      );
+      const payload = (await response.json()) as CompsResponse | { error: string };
+      setCompsLoading(false);
+      if (!response.ok || "error" in payload) {
+        setComps(null);
+        setCompsError("error" in payload ? payload.error : "Could not reach Places.");
+        return;
+      }
+      setComps(payload.comps);
+      // A fresh search drops every manual tick and goes back to the default.
+      setCompsIncluded({});
+    } catch (error) {
+      setCompsLoading(false);
+      setComps(null);
+      setCompsError(error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  /**
+   * Ask Claude to find each included comp's advertised asking rent. What comes
+   * back is a draft: it is displayed with its sources and stays out of the NOI
+   * until the user presses Use on it.
+   */
+  async function draftRents(list: Comp[]) {
+    setDraftLoading(true);
+    setDraftError(null);
+    try {
+      const response = await fetch(asset("/api/rent-draft"), {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          comps: list.map((comp) => ({
+            name: comp.name,
+            address: comp.address,
+            type: comp.type,
+          })),
+          market: deal.submarket || deal.address || undefined,
+        }),
+        cache: "no-store",
+      });
+      const payload = (await response.json()) as
+        | RentDraftResponse
+        | { error: string };
+      setDraftLoading(false);
+      if (!response.ok || "error" in payload) {
+        setDrafts(null);
+        setDraftError("error" in payload ? payload.error : "Rent draft failed.");
+        return;
+      }
+      setDrafts(payload.drafts);
+      setDraftNotes(payload.notes);
+      setDraftModel(payload.model);
+    } catch (error) {
+      setDraftLoading(false);
+      setDrafts(null);
+      setDraftError(error instanceof Error ? error.message : String(error));
     }
   }
 
@@ -232,11 +335,47 @@ export function ScreenPage({
     assumptions,
   );
 
-  // ── Gate 2 ──────────────────────────────────────────────────────────────
-  const componentFields = [fl.retailNoi, fl.officeNoi, fl.mfNoi];
-  const gate2Attempted = componentFields.some(
-    (value) => parseNumber(value) !== null,
+  // ── Revenue ─────────────────────────────────────────────────────────────
+  // Vacancy is typed as a percentage because that is how it is quoted; the
+  // engine wants a fraction.
+  const share = (raw: string): number | null => {
+    const value = parseNumber(raw);
+    return value === null ? null : value / 100;
+  };
+
+  const revenue = computeRevenue({
+    resiUnits: costProgram.resiUnits || null,
+    resiAvgNsf: parseNumber(program.avgNsf),
+    resiRentPsfMo: parseNumber(rents.resiRentPsfMo),
+    resiVacancy: share(rents.resiVacancy),
+    opexPerUnit: parseNumber(rents.opexPerUnit),
+    retailSf: costProgram.retailSf || null,
+    retailRentPsf: parseNumber(rents.retailRentPsf),
+    retailVacancy: share(rents.retailVacancy),
+    retailNonRecovPsf: parseNumber(rents.retailNonRecovPsf),
+    officeSf: costProgram.officeSf || null,
+    officeRentPsf: parseNumber(rents.officeRentPsf),
+    officeVacancy: share(rents.officeVacancy),
+    officeNonRecovPsf: parseNumber(rents.officeNonRecovPsf),
+  });
+
+  const includedComps = (comps ?? []).filter((comp) =>
+    compIncluded(comp, compsIncluded),
   );
+  const includedCompIds = new Set(includedComps.map((comp) => comp.placeId));
+
+  // ── Gate 2 ──────────────────────────────────────────────────────────────
+  // NOI is no longer typed: Gate 2 runs once Revenue has priced at least one
+  // component. An unpriced component contributes nothing rather than a zero.
+  const gate2Attempted = revenue.totalNoi !== null;
+
+  // The TDC land-rate sanity check measures the same program the costs do, so
+  // it derives rather than being typed a second time and drifting.
+  const sanity = {
+    retailSf: costProgram.retailSf,
+    officeSf: costProgram.officeSf,
+    multifamilyUnits: costProgram.resiUnits,
+  };
 
   // Cost ex-land is resolved, never typed. Split across the three components
   // by direct attribution with the shared lines spread pro rata.
@@ -253,15 +392,15 @@ export function ScreenPage({
         {
           components: {
             retail: {
-              noi: parseNumber(fl.retailNoi) ?? 0,
+              noi: revenue.retail.noi ?? 0,
               costExLand: allocated.retail,
             },
             office: {
-              noi: parseNumber(fl.officeNoi) ?? 0,
+              noi: revenue.office.noi ?? 0,
               costExLand: allocated.office,
             },
             multifamily: {
-              noi: parseNumber(fl.mfNoi) ?? 0,
+              noi: revenue.multifamily.noi ?? 0,
               costExLand: allocated.multifamily,
             },
           },
@@ -273,11 +412,7 @@ export function ScreenPage({
           askingPrice: parseNumber(fl.askingPrice) ?? 0,
           // Acreage is a site attribute, so it is typed in the Deal section.
           acreage: parseNumber(deal.acreage) ?? 0,
-          sanity: {
-            retailSf: parseNumber(fl.sanityRetailSf) ?? 0,
-            officeSf: parseNumber(fl.sanityOfficeSf) ?? 0,
-            multifamilyUnits: parseNumber(fl.sanityMfUnits) ?? 0,
-          },
+          sanity,
         },
         assumptions,
       );
@@ -356,6 +491,7 @@ export function ScreenPage({
                   state: result.state,
                 }));
                 void pullDemographics(result.lat, result.lng);
+                void pullComps(result.lat, result.lng);
               }}
               onDemographicEdit={(key, value) =>
                 setDeal((current) => ({
@@ -369,6 +505,8 @@ export function ScreenPage({
                 }))
               }
               demographicsStatus={demoStatus}
+              comps={comps ?? undefined}
+              includedCompIds={includedCompIds}
               governing={
                 deal.productType === "mixed_use"
                   ? "Mixed-Use"
@@ -434,8 +572,66 @@ export function ScreenPage({
               onGlobalMultiplier={setGlobalMultiplier}
             />
 
+            <CompsSection
+              comps={comps}
+              error={compsError}
+              loading={compsLoading}
+              radiusMi={assumptions.demo.defaultRadiusMi}
+              included={compsIncluded}
+              canRefresh={deal.lat !== null && deal.lng !== null}
+              onToggle={(placeId, next) =>
+                setCompsIncluded((current) => ({ ...current, [placeId]: next }))
+              }
+              onToggleAll={(next) =>
+                setCompsIncluded(
+                  Object.fromEntries(
+                    (comps ?? []).map((comp) => [comp.placeId, next]),
+                  ),
+                )
+              }
+              onRefresh={() => {
+                if (deal.lat === null || deal.lng === null) return;
+                void pullComps(deal.lat, deal.lng);
+              }}
+            />
+
+            <RevenueSection
+              values={rents}
+              sources={rentSources}
+              program={{
+                resiUnits: costProgram.resiUnits,
+                avgNsf: parseNumber(program.avgNsf) ?? 0,
+                retailSf: costProgram.retailSf,
+                officeSf: costProgram.officeSf,
+              }}
+              revenue={revenue}
+              drafts={drafts}
+              draftNotes={draftNotes}
+              draftError={draftError}
+              draftLoading={draftLoading}
+              draftModel={draftModel}
+              includedCompCount={includedComps.length}
+              onChange={(key, value) => {
+                setRents((current) => ({ ...current, [key]: value }));
+                // Typing over a confirmed draft makes it yours again.
+                setRentSources((current) => ({ ...current, [key]: "manual" }));
+              }}
+              onDraft={() => void draftRents(includedComps)}
+              onConfirmDraft={(draft: RentDraft) => {
+                const key = DRAFT_TARGET[draft.field as RentDraftField];
+                setRents((current) => ({ ...current, [key]: String(draft.value) }));
+                setRentSources((current) => ({ ...current, [key]: "ai_confirmed" }));
+              }}
+            />
+
             <FirstLookInputs
               values={fl}
+              sanity={sanity}
+              noi={{
+                retail: revenue.retail.noi,
+                office: revenue.office.noi,
+                multifamily: revenue.multifamily.noi,
+              }}
               onChange={(key: FirstLookFieldKey, value) =>
                 setFl((current) => ({ ...current, [key]: value }))
               }
@@ -446,8 +642,8 @@ export function ScreenPage({
             />
 
             <p className="caption pb-8">
-              Phase 2 · page state only. Nothing is saved yet; reloading clears
-              the deal.
+              Phase 6 · page state only. Nothing is saved yet; reloading clears
+              the deal, the comps and any drafted rents.
             </p>
           </div>
 
@@ -460,7 +656,7 @@ export function ScreenPage({
             gate2Error={gate2Error}
             mu={mu}
             mf={mf}
-            resiUnits={parseNumber(fl.sanityMfUnits)}
+            resiUnits={sanity.multifamilyUnits || null}
             demographicMetrics={demoMetrics}
           />
         </div>

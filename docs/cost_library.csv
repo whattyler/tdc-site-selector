@@ -1,27 +1,27 @@
 line_key,label,basis,medley_rate,medley_asof,ccc_rate,ccc_asof,notes
-resi_shell,Residential shell (Div 3-8 + 13-14: structure envelope openings special conveying),per_unit,123009,2024-06-01,97924,2025-12-01,"Medley Ph I 340 units FJ GMP 2024 pricing. CCC 301 units FJ. Medley higher on Div 3 concrete ($14.4M vs $8.6M) — podium/wrap vs surface-parked garden. Basis per unit not GSF: Medley has no MF GSF in the proforma. CCC reference: $239/heated SF all-in."
-resi_interiors,Residential interiors (Div 9-12: finishes specialties equipment furnishings),per_unit,31194,2024-06-01,23298,2025-12-01,
-resi_mep,Residential MEP (Div 15-16),per_unit,49183,2024-06-01,43251,2025-12-01,
-resi_gc_fee_gcs,Residential GC: general requirements + OH&fee + insurance + contractor contingency,pct_hard,0.127,2024-06-01,0.162,2025-12-01,"Applied to resi shell+interiors+MEP+resi sitework. OH&fee is 4.5% in both; the rest is Div 1 general requirements and insurance. CCC includes CCIP."
-resi_sitework,Residential sitework (Div 2 within the MF GMP),per_unit,7519,2024-06-01,14219,2025-12-01,"Medley MF site was largely graded under the commercial GMP so this is light. CCC is a standalone MF site and is the better convention for a pure MF deal."
-resi_ffe,Residential FF&E (amenity model office pool fitness),per_unit,3213,2024-06-01,3821,2025-12-01,
-retail_shell,Retail shell (new construction),per_retail_sf,275,2023-06-01,,,"Medley new retail buildings 1000/1100/2100/2110/2130/5000/6000/7000, 53,268 SF, Hoar 2023 pricing. Excludes Building 4000 (existing office reno) and the parking deck."
+resi_shell,Residential shell,per_unit,123009,2024-06-01,97924,2025-12-01,"Div 3-8 + 13-14: structure, envelope, openings, special, conveying. Medley Ph I 340 units FJ GMP 2024 pricing. CCC 301 units FJ. Medley higher on Div 3 concrete ($14.4M vs $8.6M) — podium/wrap vs surface-parked garden. Basis per unit not GSF: Medley has no MF GSF in the proforma. CCC reference: $239/heated SF all-in."
+resi_interiors,Residential interiors,per_unit,31194,2024-06-01,23298,2025-12-01,"Div 9-12: finishes, specialties, equipment, furnishings"
+resi_mep,Residential MEP,per_unit,49183,2024-06-01,43251,2025-12-01,Div 15-16
+resi_gc_fee_gcs,Residential GC,pct_hard,0.127,2024-06-01,0.162,2025-12-01,General requirements + OH&fee + insurance + contractor contingency. Applied to resi shell+interiors+MEP+resi sitework. OH&fee is 4.5% in both; the rest is Div 1 general requirements and insurance. CCC includes CCIP.
+resi_sitework,Residential sitework,per_unit,7519,2024-06-01,14219,2025-12-01,Div 2 within the MF GMP. Medley MF site was largely graded under the commercial GMP so this is light. CCC is a standalone MF site and is the better convention for a pure MF deal.
+resi_ffe,Residential FF&E,per_unit,3213,2024-06-01,3821,2025-12-01,"Amenity, model, office, pool, fitness"
+retail_shell,Retail shell,per_retail_sf,275,2023-06-01,,,"New construction. Medley new retail buildings 1000/1100/2100/2110/2130/5000/6000/7000, 53,268 SF, Hoar 2023 pricing. Excludes Building 4000 (existing office reno) and the parking deck."
 retail_ti_allowance,Retail TI allowance,per_retail_sf,138,2024-10-01,,,"Medley $20.34M over 147,286 GLA both phases, from Argus MP59."
-retail_leasing_commissions,Retail leasing commissions (external),per_retail_sf,53,2024-10-01,,,"Medley $7.85M over 147,286 GLA. Franklin St + tenant-side."
-office_shell,Office shell,per_office_sf,,,,,"No new office in either budget. Medley 4000 is an existing-building renovation at $49/SF + $1.22M mechanical — not a shell rate. Leave placeholder."
+retail_leasing_commissions,Retail leasing commissions,per_retail_sf,53,2024-10-01,,,"External brokerage. Medley $7.85M over 147,286 GLA. Franklin St + tenant-side."
+office_shell,Office shell,per_office_sf,,,,,No new office in either budget. Medley 4000 is an existing-building renovation at $49/SF + $1.22M mechanical — not a shell rate. Leave placeholder.
 office_ti_allowance,Office TI allowance,per_office_sf,71,2024-10-01,,,"Medley $7.90M over 112,011 RSF."
-parking_structured,Structured parking,per_space,16269,2023-06-01,,,"Medley Building 6050 deck 586 spaces $9.53M Hoar 2023 pricing."
-parking_surface,Surface parking,per_space,,,,,"Neither budget breaks out surface parking — CCC surface lot is inside Div 2. Leave placeholder."
-sitework_utilities,Site development (clearing grading storm sewer water paving) — mixed-use site,per_acre,408431,2023-06-01,,,"Medley $22.66M sitework subtotal over 55.47 acres, Hoar 2023 pricing. Heavy site: demolition, UG detention. Use for MU sites; use resi_sitework for pure MF."
-offsite_utilities,Offsite + direct utility costs,lump,3003729,2024-10-01,,,"Medley: JCP intersection reimbursement $2.0M, transformers, power bury, wifi. Very site-specific."
-hardscape_landscape_placemaking,Hardscape landscape lighting signage water feature,per_retail_sf,87,2023-06-01,,,"Medley $12.82M over 147,286 retail GLA. Placemaking scales with the commercial program, not units."
-gc_fee_gcs,Commercial GC: general conditions + requirements + fee + insurance (GMP),pct_hard,0.132,2023-06-01,,,"Medley Hoar fees & conditions $9.0M over buildings+sitework+landscape $68.3M. Fee alone is ~3.6%."
-hard_contingency,Hard cost contingency (owner),pct_hard,0.053,2024-10-01,0.05,2025-12-01,"Medley $15.1M over $286M hard. CCC 5% of hard."
-ae_design,A&E + major trade consultants,pct_hard,0.039,2024-10-01,0.031,2025-12-01,"Medley commercial consultants $6.7M + MF A&E $4.4M over $286M hard. CCC Dwell + engineers + civil ~$2.0M over $63.7M."
-permits_impact_fees,Permits + impact + water/sewer tap fees,per_unit,3060,2024-10-01,13510,2025-12-01,"Medley $2.29M government fees over 750 units (Johns Creek, MU). CCC $4.07M over 301 units — $2.92M is Cumming water & sewer. Jurisdiction-driven; treat as a range."
-dev_fee,Development fee (TDC),pct_total,0.029,2024-10-01,0.035,2025-12-01,"Medley TDC fees $12.4M over $433.6M gross. CCC 3.5% of budget."
-legal_title_closing,Legal + title + transfer + closing,lump,2184708,2024-10-01,459345,2025-12-01,"Medley two-phase MU with bond/DAFC work. CCC legal $175K + transfer/title $184K + loan legal $100K."
-marketing_leaseup,Marketing + brand + resi lease-up startup,per_unit,1328,2024-10-01,1080,2025-12-01,"Medley $996K marketing over 750 units. CCC $125K marketing + $25K events + $175K leasing startup over 301."
-financing_carry,Financing (fees + interest reserve + carry),pct_total,0.054,2024-10-01,0.035,2025-12-01,"Medley $23.4M over $433.6M gross. CCC $3.14M over $88.5M incl $1.37M interest reserve. First Look already carries land at 5.5% separately — do not double count land carry."
-taxes_insurance_construction,RE taxes + builder's risk + owner's liability during construction,pct_total,0.025,2024-10-01,0.012,2025-12-01,"Medley $10.7M over $433.6M (two phases, long hold). CCC $1.10M over $88.5M."
-soft_contingency,Soft cost contingency,pct_soft,,,0.05,2025-12-01,"CCC 5% of soft. Medley carries one blended contingency line (see hard_contingency). Basis pct_soft is new — add it."
+parking_structured,Structured parking,per_space,16269,2023-06-01,,,Medley Building 6050 deck 586 spaces $9.53M Hoar 2023 pricing.
+parking_surface,Surface parking,per_space,,,,,Neither budget breaks out surface parking — CCC surface lot is inside Div 2. Leave placeholder.
+sitework_utilities,Site development,per_acre,408431,2023-06-01,,,"Clearing, grading, storm, sewer, water, paving — mixed-use site. Medley $22.66M sitework subtotal over 55.47 acres, Hoar 2023 pricing. Heavy site: demolition, UG detention. Use for MU sites; use resi_sitework for pure MF."
+offsite_utilities,Offsite utilities,lump,3003729,2024-10-01,,,"Offsite + direct utility costs. Medley: JCP intersection reimbursement $2.0M, transformers, power bury, wifi. Very site-specific."
+hardscape_landscape_placemaking,Hardscape and landscape,per_retail_sf,87,2023-06-01,,,"Lighting, signage, water feature, placemaking. Medley $12.82M over 147,286 retail GLA. Placemaking scales with the commercial program, not units."
+gc_fee_gcs,Commercial GC,pct_hard,0.132,2023-06-01,,,General conditions + requirements + fee + insurance (GMP). Medley Hoar fees & conditions $9.0M over buildings+sitework+landscape $68.3M. Fee alone is ~3.6%.
+hard_contingency,Hard cost contingency,pct_hard,0.053,2024-10-01,0.05,2025-12-01,Owner-held. Medley $15.1M over $286M hard. CCC 5% of hard.
+ae_design,A&E design,pct_hard,0.039,2024-10-01,0.031,2025-12-01,A&E + major trade consultants. Medley commercial consultants $6.7M + MF A&E $4.4M over $286M hard. CCC Dwell + engineers + civil ~$2.0M over $63.7M.
+permits_impact_fees,Permits and impact fees,per_unit,3060,2024-10-01,13510,2025-12-01,"Permits + impact + water/sewer tap fees. Medley $2.29M government fees over 750 units (Johns Creek, MU). CCC $4.07M over 301 units — $2.92M is Cumming water & sewer. Jurisdiction-driven; treat as a range."
+dev_fee,Development fee,pct_total,0.029,2024-10-01,0.035,2025-12-01,TDC. Medley TDC fees $12.4M over $433.6M gross. CCC 3.5% of budget.
+legal_title_closing,Legal and closing,lump,2184708,2024-10-01,459345,2025-12-01,Legal + title + transfer + closing. Medley two-phase MU with bond/DAFC work. CCC legal $175K + transfer/title $184K + loan legal $100K.
+marketing_leaseup,Marketing and lease-up,per_unit,1328,2024-10-01,1080,2025-12-01,Marketing + brand + resi lease-up startup. Medley $996K marketing over 750 units. CCC $125K marketing + $25K events + $175K leasing startup over 301.
+financing_carry,Financing and carry,pct_total,0.054,2024-10-01,0.035,2025-12-01,Fees + interest reserve + carry. Medley $23.4M over $433.6M gross. CCC $3.14M over $88.5M incl $1.37M interest reserve. First Look already carries land at 5.5% separately — do not double count land carry.
+taxes_insurance_construction,Taxes and insurance,pct_total,0.025,2024-10-01,0.012,2025-12-01,"RE taxes + builder's risk + owner's liability during construction. Medley $10.7M over $433.6M (two phases, long hold). CCC $1.10M over $88.5M."
+soft_contingency,Soft cost contingency,pct_soft,,,0.05,2025-12-01,CCC 5% of soft. Medley carries one blended contingency line (see hard_contingency). Basis pct_soft is new — add it.

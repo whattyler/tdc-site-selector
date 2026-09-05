@@ -184,6 +184,50 @@ export function FieldGrid({
   );
 }
 
+/**
+ * A value the page computed rather than took. Reads like a field so the row
+ * lines up, but there is nothing to type into — the caption says where it came
+ * from, so nobody goes looking for the input.
+ *
+ * A null value is "not computed yet" and shows an em-dash. A plain quantity of
+ * zero shows one too, because a program with no office is not an office of
+ * zero SF; a formatted value renders its zero, because a computed $0 of NOI is
+ * a real answer.
+ */
+export function DerivedField({
+  label,
+  value,
+  suffix,
+  from = "Program",
+  format,
+}: {
+  label: string;
+  value: number | null;
+  suffix?: string;
+  from?: string;
+  format?: (value: number) => string;
+}) {
+  const text =
+    value === null
+      ? "—"
+      : format
+        ? format(value)
+        : value === 0
+          ? "—"
+          : value.toLocaleString();
+
+  return (
+    <FieldShell label={label} hint={`From ${from}`}>
+      <span className="flex items-baseline gap-1 border-b border-line py-1">
+        <span className={cn("num flex-1", value === null ? "text-ink-3" : "text-ink")}>
+          {text}
+        </span>
+        {suffix && <span className="caption">{suffix}</span>}
+      </span>
+    </FieldShell>
+  );
+}
+
 export function SubHead({ children }: { children: React.ReactNode }) {
   return (
     <div className="col-span-full border-b border-line pb-1 text-sm font-[530] text-ink">
