@@ -19,7 +19,7 @@ import {
   screenDeal,
 } from "@/lib/scoring";
 
-import { DealInputs, type DealFields, EMPTY_DEAL } from "./deal-inputs";
+import { DealInputs, type DealFields, DEFAULT_DEAL } from "./deal-inputs";
 import {
   EMPTY_FIRST_LOOK,
   FirstLookInputs,
@@ -49,7 +49,7 @@ export function ScreenPage({
   assumptionsOrigin,
   user,
 }: ScreenPageProps) {
-  const [deal, setDeal] = useState<DealFields>(EMPTY_DEAL);
+  const [deal, setDeal] = useState<DealFields>(DEFAULT_DEAL);
   const [answers, setAnswers] = useState<Record<string, Answer>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [probability, setProbability] = useState(assumptions.probability.default);

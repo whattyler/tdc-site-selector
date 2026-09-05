@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { asset } from "@/lib/base-path";
 import {
@@ -44,9 +44,14 @@ export interface DealFields {
   demoDetail: string | null;
 }
 
-export const EMPTY_DEAL: DealFields = {
-  name: "",
-  address: "",
+/**
+ * The page opens on Medley rather than an empty form. It is the reference deal
+ * everyone here already knows, so the first thing you see is a worked example
+ * rather than eleven blank fields. The address is geocoded and scored on mount.
+ */
+export const DEFAULT_DEAL: DealFields = {
+  name: "Medley",
+  address: "11650 Johns Creek Pkwy, Johns Creek, GA 30097",
   submarket: "",
   productType: "mixed_use",
   mu: "",
@@ -92,6 +97,7 @@ export function DealInputs({
   const [error, setError] = useState<string | null>(null);
   // The address a lookup last ran for, so blurring an untouched field is free.
   const lastLookedUp = useRef<string | null>(null);
+  const bootstrapped = useRef(false);
 
   // No-op until Phase 3b. Acreage stays typed.
   const parcel = useParcelLookup(values.lat, values.lng);
@@ -131,11 +137,32 @@ export function DealInputs({
     }
   }
 
+  /**
+   * Geocode and score the default deal once, on mount. Runs the same path a
+   * blur does, so a failure here reports itself the same way.
+   *
+   * Deferred by a tick so the first state update lands after mount rather than
+   * during the effect body.
+   */
+  useEffect(() => {
+    if (values.address.trim() === "" || values.lat !== null) return;
+    const timer = setTimeout(() => {
+      // The guard lives inside the timer, not in the effect body. React's dev
+      // double-invoke runs the effect, cancels it, and runs it again — a ref
+      // set on the first pass would make the second pass skip, and the work
+      // would never happen at all.
+      if (bootstrapped.current) return;
+      bootstrapped.current = true;
+      void geocode();
+    }, 0);
+    return () => clearTimeout(timer);
+    // Mount only: re-running this on every address keystroke is exactly what
+    // the blur and Enter handlers are for.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
-    <InputSection
-      title="Deal · Site · Demographics"
-      note="Demographics typed by hand until Phase 4"
-    >
+    <InputSection title="Deal · Site · Demographics">
       <div className="flex items-start gap-6">
         <div className="min-w-0 flex-1">
           <FieldGrid columns={3}>
@@ -143,7 +170,7 @@ export function DealInputs({
               label="Deal name"
               value={values.name}
               onChange={(value) => onChange("name", value)}
-              placeholder="Medley"
+              placeholder="Deal name"
             />
 
             <label className="col-span-2 block">
@@ -152,7 +179,7 @@ export function DealInputs({
                 <input
                   type="text"
                   value={values.address}
-                  placeholder="6000 Medlock Bridge Pkwy, Johns Creek GA"
+                  placeholder="Street, city, state"
                   onChange={(event) => onChange("address", event.target.value)}
                   onBlur={() => void geocode()}
                   onKeyDown={(event) => {
@@ -199,7 +226,7 @@ export function DealInputs({
               label="Submarket"
               value={values.submarket}
               onChange={(value) => onChange("submarket", value)}
-              placeholder="Johns Creek, GA"
+              placeholder="City, ST"
               hint="Filled from the geocode · overridable"
             />
             <SelectField
