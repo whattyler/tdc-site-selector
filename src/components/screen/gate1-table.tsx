@@ -18,6 +18,39 @@ const BUCKET_LABELS: Record<BucketKey, string> = {
 
 const BUCKET_ORDER: BucketKey[] = ["real_estate", "site", "deal", "toro"];
 
+/**
+ * Answer labels per criterion, in [yes, maybe, no] order.
+ *
+ * Presentation only. The control still sends yes / maybe / no and the engine
+ * still scores 3 / 1 / 0 — these just put the question in the language the
+ * criterion is actually asked in. A criterion missing from this map falls back
+ * to Yes / Maybe / No.
+ *
+ * Barriers to Entry is the one to read carefully: John's prompt is "can this be
+ * replicated a mile away within 24 months?", where a plain Yes means replicable,
+ * which is the bad answer but scores 3. High / Some / None re-anchors the
+ * control to the criterion name so the row cannot be answered backwards.
+ */
+const ANSWER_LABELS: Record<string, readonly [string, string, string]> = {
+  geography: ["≤30 min", "30–45 min", ">45 min"],
+  market: ["Strong", "Mixed", "Weak"],
+  location: ["Prime", "Adequate", "Poor"],
+  barriers_to_entry: ["High", "Some", "None"],
+  entitlements: ["In place", "Achievable", "At risk"],
+  competition: ["Light", "Moderate", "Heavy"],
+  physical: ["Clean", "Manageable", "Problem"],
+  seller_sophistication: ["Sophisticated", "Mixed", "Unsophisticated"],
+  control: ["Full", "Partial", "Thin"],
+  market_viability: ["All clear", "Some risk", "One fails"],
+  partner_quality: ["Strong", "Unproven", "None"],
+  pursuit_costs: ["Low", "Normal", "High"],
+  timing: ["Good window", "Tight", "Wrong window"],
+  brand_fit: ["On brand", "Adjacent", "Off brand"],
+  capability: ["Proven", "Stretch", "New to us"],
+  capacity: ["Available", "Tight", "None"],
+  fee_potential: ["Strong", "Modest", "Thin"],
+};
+
 interface Gate1TableProps {
   screen: ScreenResult;
   notes: Record<string, string>;
@@ -75,7 +108,7 @@ export function Gate1Table({
             <th className="micro py-2 pl-6 pr-3 text-left">Criterion</th>
             <th className="micro w-12 py-2 pr-4 text-right">Wt</th>
             <th className="micro w-14 py-2 pr-4 text-left">KO</th>
-            <th className="micro w-[240px] py-2 pr-4 text-left">Answer</th>
+            <th className="micro w-[330px] py-2 pr-4 text-left">Answer</th>
             <th className="micro w-20 py-2 pr-5 text-right">Score</th>
             <th className="micro w-10 py-2 pr-5 text-left">Note</th>
           </tr>
@@ -220,6 +253,7 @@ function BucketGroup({
           note={notes[row.key] ?? ""}
           onAnswer={(value) => onAnswer(row.key, value)}
           onNote={(value) => onNote(row.key, value)}
+          labels={ANSWER_LABELS[row.key]}
           caption={
             row.key === "demographics"
               ? demographicsCaption

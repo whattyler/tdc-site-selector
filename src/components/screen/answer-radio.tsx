@@ -5,11 +5,23 @@ import { useRef } from "react";
 import type { Answer } from "@/lib/scoring";
 import { cn } from "@/lib/utils";
 
-const OPTIONS: { value: Exclude<Answer, null>; label: string }[] = [
-  { value: "yes", label: "Yes" },
-  { value: "maybe", label: "Maybe" },
-  { value: "no", label: "No" },
+type Choice = Exclude<Answer, null>;
+
+const CHOICES: readonly Choice[] = ["yes", "maybe", "no"];
+
+/** Fallback when a criterion has no entry in the label map. */
+export const DEFAULT_ANSWER_LABELS: readonly [string, string, string] = [
+  "Yes",
+  "Maybe",
+  "No",
 ];
+
+/** The underlying answer, for the tooltip. The label can say anything. */
+const ANSWER_WORD: Record<Choice, string> = {
+  yes: "Yes",
+  maybe: "Maybe",
+  no: "No",
+};
 
 interface AnswerRadioProps {
   name: string;
@@ -18,15 +30,22 @@ interface AnswerRadioProps {
   /** Renders a selected "no" as a knockout rather than a plain selection. */
   ko?: boolean;
   label: string;
+  /** Display-only labels in [yes, maybe, no] order. Scoring is unaffected. */
+  labels?: readonly [string, string, string];
 }
 
 /**
- * Yes | Maybe | No as one segmented control.
+ * Yes | Maybe | No as one segmented control, under whatever words the criterion
+ * uses for them. The labels are presentation only — the value sent up is always
+ * yes / maybe / no, and the engine scores 3 / 1 / 0 regardless.
  *
- * Three joined segments on a shared hairline. The selected segment fills Toro
- * red; on a knockout row a selected "No" fills slate and inverts instead, so it
- * matches the chip and the left rule the row picks up — a knockout is a NO-GO
- * signal, and NO-GO is never a second red.
+ * Laid out as a three-column grid rather than a flex row so all three segments
+ * take the width of the longest label in that row; "Sophisticated | Mixed |
+ * Unsophisticated" stays as clickable as "Low | Normal | High".
+ *
+ * The selected segment fills Toro red; on a knockout row a selected "No" fills
+ * slate and inverts instead, matching the chip and the left rule the row picks
+ * up — a knockout is a NO-GO signal, and NO-GO is never a second red.
  *
  * Arrow keys move within the row, Tab moves to the next row. Clicking the
  * selected segment clears it back to unanswered.
@@ -37,15 +56,16 @@ export function AnswerRadio({
   onChange,
   ko = false,
   label,
+  labels = DEFAULT_ANSWER_LABELS,
 }: AnswerRadioProps) {
   const groupRef = useRef<HTMLDivElement>(null);
 
   function move(delta: number) {
-    const index = OPTIONS.findIndex((option) => option.value === value);
-    const next = OPTIONS[(index + delta + OPTIONS.length) % OPTIONS.length];
-    onChange(next.value);
+    const index = CHOICES.indexOf(value as Choice);
+    const nextIndex = (index + delta + CHOICES.length) % CHOICES.length;
+    onChange(CHOICES[nextIndex]);
     const buttons = groupRef.current?.querySelectorAll("button");
-    buttons?.[OPTIONS.indexOf(next)]?.focus();
+    buttons?.[nextIndex]?.focus();
   }
 
   return (
@@ -53,7 +73,7 @@ export function AnswerRadio({
       ref={groupRef}
       role="radiogroup"
       aria-label={`${label} answer`}
-      className="inline-flex border border-line-strong"
+      className="inline-grid grid-cols-3 border border-line-strong"
       onKeyDown={(event) => {
         if (event.key === "ArrowRight" || event.key === "ArrowDown") {
           event.preventDefault();
@@ -64,24 +84,24 @@ export function AnswerRadio({
         }
       }}
     >
-      {OPTIONS.map((option, index) => {
-        const selected = value === option.value;
-        const knockedOut = selected && ko && option.value === "no";
+      {CHOICES.map((choice, index) => {
+        const selected = value === choice;
+        const knockedOut = selected && ko && choice === "no";
+        const word = ANSWER_WORD[choice];
         return (
           <button
-            key={option.value}
+            key={choice}
             type="button"
             role="radio"
             name={name}
             aria-checked={selected}
-            tabIndex={
-              selected || (value === null && option.value === "yes") ? 0 : -1
-            }
-            onClick={() => onChange(selected ? null : option.value)}
-            title={selected ? "Click again to clear" : undefined}
+            tabIndex={selected || (value === null && choice === "yes") ? 0 : -1}
+            // Says what the label actually scores as, since the words vary.
+            title={selected ? `${word} — click again to clear` : word}
+            onClick={() => onChange(selected ? null : choice)}
             className={cn(
-              "px-2.5 py-1 text-sm leading-none transition-colors",
-              "cursor-pointer",
+              "cursor-pointer px-2.5 py-1 text-center text-sm leading-none",
+              "transition-colors",
               index > 0 && "border-l border-l-line-strong",
               selected
                 ? knockedOut
@@ -90,7 +110,7 @@ export function AnswerRadio({
                 : "bg-transparent text-ink hover:bg-surface-3",
             )}
           >
-            {option.label}
+            {labels[index]}
           </button>
         );
       })}

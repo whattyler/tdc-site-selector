@@ -19,6 +19,8 @@ interface CriterionRowProps {
   computedDisplay?: string;
   /** Alternating stripe, counted across the whole table rather than per bucket. */
   zebra?: boolean;
+  /** Display-only answer labels in [yes, maybe, no] order. */
+  labels?: readonly [string, string, string];
 }
 
 /**
@@ -34,6 +36,7 @@ export function CriterionRow({
   caption,
   computedDisplay,
   zebra = false,
+  labels,
 }: CriterionRowProps) {
   const [open, setOpen] = useState(false);
   const expanded = open || note !== "";
@@ -88,7 +91,10 @@ export function CriterionRow({
           )}
         </td>
 
-        <td className="w-[240px] pr-4">
+        {/* Wide enough for the longest row — "Sophisticated | Mixed |
+            Unsophisticated" — since every row's segments size to its own
+            longest label. */}
+        <td className="w-[330px] pr-4">
           {computedDisplay ? (
             <span className="text-ink">{computedDisplay}</span>
           ) : (
@@ -98,6 +104,7 @@ export function CriterionRow({
               onChange={onAnswer}
               ko={row.ko}
               label={row.label}
+              labels={labels}
             />
           )}
         </td>
