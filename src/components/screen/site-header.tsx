@@ -1,8 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 
 import { asset } from "@/lib/base-path";
+import { cn } from "@/lib/utils";
 
 import type { DealFields } from "./deal-inputs";
 
@@ -12,10 +14,19 @@ const PRODUCT_LABEL: Record<DealFields["productType"], string> = {
   auto: "product type not set",
 };
 
-export function SiteHeader({ deal }: { deal: DealFields }) {
-  const context = [deal.name || "Untitled deal", PRODUCT_LABEL[deal.productType]]
-    .filter(Boolean)
-    .join(" · ");
+export function SiteHeader({
+  deal,
+  active,
+}: {
+  deal?: DealFields;
+  /** Which nav item is the page you are on. */
+  active?: "pipeline" | "screen";
+}) {
+  const context = deal
+    ? [deal.name || "Untitled deal", PRODUCT_LABEL[deal.productType]]
+        .filter(Boolean)
+        .join(" · ")
+    : "Pipeline";
 
   return (
     <header
@@ -53,7 +64,28 @@ export function SiteHeader({ deal }: { deal: DealFields }) {
           <span className="truncate text-lg text-ink-3">· {context}</span>
         </div>
 
-        {/* Right side stays empty until Phase 8 adds pipeline nav. */}
+        <nav className="ml-auto flex shrink-0 items-baseline gap-5 pl-6">
+          <Link
+            href="/pipeline"
+            className={cn(
+              "micro leading-none",
+              active === "pipeline"
+                ? "text-[var(--toro-red)]"
+                : "text-ink-2 hover:text-ink",
+            )}
+          >
+            Pipeline
+          </Link>
+          {/* A hard navigation, not a router push: a new deal has to clear every
+              piece of page state, and the cheapest way to guarantee that is a
+              fresh document. */}
+          <a
+            href={asset("/")}
+            className="micro leading-none text-ink-2 hover:text-ink"
+          >
+            New deal
+          </a>
+        </nav>
       </div>
     </header>
   );

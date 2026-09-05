@@ -1,0 +1,1307 @@
+{
+  "id": "3832f770-3554-4b58-ac0f-ec3fc8b944ae",
+  "prevId": "001ceeae-7cc0-4d05-9d05-f05cc6adc37f",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.assumptions": {
+      "name": "assumptions",
+      "schema": "",
+      "columns": {
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "asof": {
+          "name": "asof",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.comps": {
+      "name": "comps",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "deal_id": {
+          "name": "deal_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "place_id": {
+          "name": "place_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "address": {
+          "name": "address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "comp_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rating": {
+          "name": "rating",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rating_count": {
+          "name": "rating_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lat": {
+          "name": "lat",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lng": {
+          "name": "lng",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "distance_mi": {
+          "name": "distance_mi",
+          "type": "numeric(8, 3)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "year_built": {
+          "name": "year_built",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "units": {
+          "name": "units",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rent_psf": {
+          "name": "rent_psf",
+          "type": "numeric(10, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rent_source": {
+          "name": "rent_source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ai_draft": {
+          "name": "ai_draft",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "include": {
+          "name": "include",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        }
+      },
+      "indexes": {
+        "comps_deal_id_idx": {
+          "name": "comps_deal_id_idx",
+          "columns": [
+            {
+              "expression": "deal_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "comps_deal_id_deals_id_fk": {
+          "name": "comps_deal_id_deals_id_fk",
+          "tableFrom": "comps",
+          "tableTo": "deals",
+          "columnsFrom": [
+            "deal_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.cost_library": {
+      "name": "cost_library",
+      "schema": "",
+      "columns": {
+        "line_key": {
+          "name": "line_key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "label": {
+          "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "basis": {
+          "name": "basis",
+          "type": "cost_basis",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "cost_category",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "applies_to": {
+          "name": "applies_to",
+          "type": "cost_applies_to",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "medley_rate": {
+          "name": "medley_rate",
+          "type": "numeric(14, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "medley_asof": {
+          "name": "medley_asof",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ccc_rate": {
+          "name": "ccc_rate",
+          "type": "numeric(14, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ccc_asof": {
+          "name": "ccc_asof",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.cost_library_log": {
+      "name": "cost_library_log",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "who": {
+          "name": "who",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "at": {
+          "name": "at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "line_key": {
+          "name": "line_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "field": {
+          "name": "field",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "old_value": {
+          "name": "old_value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "new_value": {
+          "name": "new_value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "cost_library_log_line_key_idx": {
+          "name": "cost_library_log_line_key_idx",
+          "columns": [
+            {
+              "expression": "line_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.cost_lines": {
+      "name": "cost_lines",
+      "schema": "",
+      "columns": {
+        "deal_id": {
+          "name": "deal_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "line_key": {
+          "name": "line_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "cost_source",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "multiplier": {
+          "name": "multiplier",
+          "type": "numeric(6, 4)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "custom_rate": {
+          "name": "custom_rate",
+          "type": "numeric(14, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "resolved_rate": {
+          "name": "resolved_rate",
+          "type": "numeric(14, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "resolved_amount": {
+          "name": "resolved_amount",
+          "type": "numeric(16, 2)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "cost_lines_deal_id_deals_id_fk": {
+          "name": "cost_lines_deal_id_deals_id_fk",
+          "tableFrom": "cost_lines",
+          "tableTo": "deals",
+          "columnsFrom": [
+            "deal_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "cost_lines_deal_id_line_key_pk": {
+          "name": "cost_lines_deal_id_line_key_pk",
+          "columns": [
+            "deal_id",
+            "line_key"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.deals": {
+      "name": "deals",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "address": {
+          "name": "address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lat": {
+          "name": "lat",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lng": {
+          "name": "lng",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "geohash7": {
+          "name": "geohash7",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "acreage": {
+          "name": "acreage",
+          "type": "numeric(12, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "jurisdiction": {
+          "name": "jurisdiction",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "submarket": {
+          "name": "submarket",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "product_type": {
+          "name": "product_type",
+          "type": "product_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'auto'"
+        },
+        "asking_price": {
+          "name": "asking_price",
+          "type": "numeric(16, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_by": {
+          "name": "updated_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cost_global_multiplier": {
+          "name": "cost_global_multiplier",
+          "type": "numeric(6, 4)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "status": {
+          "name": "status",
+          "type": "deal_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        }
+      },
+      "indexes": {
+        "deals_geohash7_idx": {
+          "name": "deals_geohash7_idx",
+          "columns": [
+            {
+              "expression": "geohash7",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "deals_created_by_idx": {
+          "name": "deals_created_by_idx",
+          "columns": [
+            {
+              "expression": "created_by",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.demographics": {
+      "name": "demographics",
+      "schema": "",
+      "columns": {
+        "deal_id": {
+          "name": "deal_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "mu_score": {
+          "name": "mu_score",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mf_score": {
+          "name": "mf_score",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "population_3mi": {
+          "name": "population_3mi",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "radius_mi": {
+          "name": "radius_mi",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metrics": {
+          "name": "metrics",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pulled_at": {
+          "name": "pulled_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dashboard_version": {
+          "name": "dashboard_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source": {
+          "name": "source",
+          "type": "demographics_source",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'api'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "demographics_deal_id_deals_id_fk": {
+          "name": "demographics_deal_id_deals_id_fk",
+          "tableFrom": "demographics",
+          "tableTo": "deals",
+          "columnsFrom": [
+            "deal_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.demographics_cache": {
+      "name": "demographics_cache",
+      "schema": "",
+      "columns": {
+        "geohash7": {
+          "name": "geohash7",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "radius_mi": {
+          "name": "radius_mi",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payload": {
+          "name": "payload",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fetched_at": {
+          "name": "fetched_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "demographics_cache_geohash7_radius_mi_version_pk": {
+          "name": "demographics_cache_geohash7_radius_mi_version_pk",
+          "columns": [
+            "geohash7",
+            "radius_mi",
+            "version"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.first_look_results": {
+      "name": "first_look_results",
+      "schema": "",
+      "columns": {
+        "deal_id": {
+          "name": "deal_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "total_noi": {
+          "name": "total_noi",
+          "type": "numeric(16, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_cost_ex_land": {
+          "name": "total_cost_ex_land",
+          "type": "numeric(16, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "max_land_price": {
+          "name": "max_land_price",
+          "type": "numeric(16, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "headroom_pct_of_ask": {
+          "name": "headroom_pct_of_ask",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "yoc_on_cost": {
+          "name": "yoc_on_cost",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "blended_yoc": {
+          "name": "blended_yoc",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "retail_share_of_noi": {
+          "name": "retail_share_of_noi",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "land_test": {
+          "name": "land_test",
+          "type": "ko_result",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "combined_verdict": {
+          "name": "combined_verdict",
+          "type": "combined_verdict",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "computed_at": {
+          "name": "computed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "first_look_results_deal_id_deals_id_fk": {
+          "name": "first_look_results_deal_id_deals_id_fk",
+          "tableFrom": "first_look_results",
+          "tableTo": "deals",
+          "columnsFrom": [
+            "deal_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.programs": {
+      "name": "programs",
+      "schema": "",
+      "columns": {
+        "deal_id": {
+          "name": "deal_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "resi_units": {
+          "name": "resi_units",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "avg_nsf": {
+          "name": "avg_nsf",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "unit_mix": {
+          "name": "unit_mix",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "resi_nrsf": {
+          "name": "resi_nrsf",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "resi_gsf": {
+          "name": "resi_gsf",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "retail_sf": {
+          "name": "retail_sf",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "office_sf": {
+          "name": "office_sf",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "parking_spaces": {
+          "name": "parking_spaces",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "parking_type": {
+          "name": "parking_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hotel_keys": {
+          "name": "hotel_keys",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "th_lots": {
+          "name": "th_lots",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "outparcels": {
+          "name": "outparcels",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "stories": {
+          "name": "stories",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "construction_type": {
+          "name": "construction_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "programs_deal_id_deals_id_fk": {
+          "name": "programs_deal_id_deals_id_fk",
+          "tableFrom": "programs",
+          "tableTo": "deals",
+          "columnsFrom": [
+            "deal_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.revenue": {
+      "name": "revenue",
+      "schema": "",
+      "columns": {
+        "deal_id": {
+          "name": "deal_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "resi_rent_psf_mo": {
+          "name": "resi_rent_psf_mo",
+          "type": "numeric(10, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "retail_rent_psf": {
+          "name": "retail_rent_psf",
+          "type": "numeric(10, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "office_rent_psf": {
+          "name": "office_rent_psf",
+          "type": "numeric(10, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "vacancy": {
+          "name": "vacancy",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "opex_per_unit": {
+          "name": "opex_per_unit",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "retail_nonrecov_psf": {
+          "name": "retail_nonrecov_psf",
+          "type": "numeric(10, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "office_nonrecov_psf": {
+          "name": "office_nonrecov_psf",
+          "type": "numeric(10, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rent_source": {
+          "name": "rent_source",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "revenue_deal_id_deals_id_fk": {
+          "name": "revenue_deal_id_deals_id_fk",
+          "tableFrom": "revenue",
+          "tableTo": "deals",
+          "columnsFrom": [
+            "deal_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.screen_answers": {
+      "name": "screen_answers",
+      "schema": "",
+      "columns": {
+        "deal_id": {
+          "name": "deal_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "criterion_key": {
+          "name": "criterion_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "answer": {
+          "name": "answer",
+          "type": "screen_answer",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "answered_by": {
+          "name": "answered_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "screen_answers_deal_id_deals_id_fk": {
+          "name": "screen_answers_deal_id_deals_id_fk",
+          "tableFrom": "screen_answers",
+          "tableTo": "deals",
+          "columnsFrom": [
+            "deal_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "screen_answers_deal_id_criterion_key_pk": {
+          "name": "screen_answers_deal_id_criterion_key_pk",
+          "columns": [
+            "deal_id",
+            "criterion_key"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.screen_results": {
+      "name": "screen_results",
+      "schema": "",
+      "columns": {
+        "deal_id": {
+          "name": "deal_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "weighted_score": {
+          "name": "weighted_score",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unknown_share": {
+          "name": "unknown_share",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ko_pass": {
+          "name": "ko_pass",
+          "type": "ko_result",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "demo_band": {
+          "name": "demo_band",
+          "type": "demographic_band",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "verdict": {
+          "name": "verdict",
+          "type": "verdict",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "prob": {
+          "name": "prob",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "prob_weighted": {
+          "name": "prob_weighted",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "computed_at": {
+          "name": "computed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "screen_results_deal_id_deals_id_fk": {
+          "name": "screen_results_deal_id_deals_id_fk",
+          "tableFrom": "screen_results",
+          "tableTo": "deals",
+          "columnsFrom": [
+            "deal_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.combined_verdict": {
+      "name": "combined_verdict",
+      "schema": "public",
+      "values": [
+        "DOUBLE GO",
+        "GO — LAND FAIL",
+        "WATCH",
+        "INCOMPLETE",
+        "NO-GO",
+        "NOT SCORED"
+      ]
+    },
+    "public.comp_type": {
+      "name": "comp_type",
+      "schema": "public",
+      "values": [
+        "apartment",
+        "retail",
+        "office"
+      ]
+    },
+    "public.cost_applies_to": {
+      "name": "cost_applies_to",
+      "schema": "public",
+      "values": [
+        "resi_hard",
+        "commercial_hard",
+        "hard",
+        "soft",
+        "total"
+      ]
+    },
+    "public.cost_basis": {
+      "name": "cost_basis",
+      "schema": "public",
+      "values": [
+        "per_resi_gsf",
+        "per_retail_sf",
+        "per_office_sf",
+        "per_space",
+        "per_unit",
+        "per_acre",
+        "pct_hard",
+        "pct_soft",
+        "pct_total",
+        "lump"
+      ]
+    },
+    "public.cost_category": {
+      "name": "cost_category",
+      "schema": "public",
+      "values": [
+        "hard",
+        "soft",
+        "other"
+      ]
+    },
+    "public.cost_source": {
+      "name": "cost_source",
+      "schema": "public",
+      "values": [
+        "medley",
+        "ccc",
+        "custom"
+      ]
+    },
+    "public.deal_status": {
+      "name": "deal_status",
+      "schema": "public",
+      "values": [
+        "draft",
+        "screened",
+        "pursuing",
+        "passed",
+        "archived"
+      ]
+    },
+    "public.demographic_band": {
+      "name": "demographic_band",
+      "schema": "public",
+      "values": [
+        "GO",
+        "WATCH",
+        "NO-GO"
+      ]
+    },
+    "public.demographics_source": {
+      "name": "demographics_source",
+      "schema": "public",
+      "values": [
+        "api",
+        "manual"
+      ]
+    },
+    "public.ko_result": {
+      "name": "ko_result",
+      "schema": "public",
+      "values": [
+        "PASS",
+        "FAIL"
+      ]
+    },
+    "public.product_type": {
+      "name": "product_type",
+      "schema": "public",
+      "values": [
+        "auto",
+        "mixed_use",
+        "multifamily"
+      ]
+    },
+    "public.screen_answer": {
+      "name": "screen_answer",
+      "schema": "public",
+      "values": [
+        "yes",
+        "maybe",
+        "no"
+      ]
+    },
+    "public.verdict": {
+      "name": "verdict",
+      "schema": "public",
+      "values": [
+        "GO",
+        "WATCH",
+        "NO-GO",
+        "INCOMPLETE",
+        "NOT SCORED"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

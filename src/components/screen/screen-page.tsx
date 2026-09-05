@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { asset } from "@/lib/base-path";
@@ -34,7 +35,14 @@ import {
   type ScenarioCell,
 } from "@/lib/sensitivity";
 
-import { DealInputs, type DealFields, DEFAULT_DEAL } from "./deal-inputs";
+import type { DealSnapshot } from "@/lib/deals/snapshot";
+
+import {
+  DealInputs,
+  type DealFields,
+  DEFAULT_DEAL,
+  EMPTY_DEAL,
+} from "./deal-inputs";
 import {
   EMPTY_FIRST_LOOK,
   FirstLookInputs,
@@ -54,6 +62,7 @@ import {
   RevenueSection,
 } from "./revenue-section";
 import {
+  EMPTY_PROGRAM,
   MEDLEY_PROGRAM,
   ProgramInputs,
   type ProgramFields,
@@ -83,44 +92,81 @@ interface ScreenPageProps {
   /** Shown in the header so it is obvious where the numbers came from. */
   assumptionsOrigin: string;
   user: { name: string | null; upn: string | null };
+  /** A deal read back from the database. Absent means a new one. */
+  initial?: DealSnapshot | null;
+  /** Seeds a new deal with Medley. Only from `?demo=medley`. */
+  demo?: boolean;
+  /** False when there is nowhere to save to, which disables the button. */
+  canSave: boolean;
 }
 
 /**
- * Phase 2: the screen page.
+ * The screen page.
  *
- * All state is local. Nothing is written to the database yet — reloading the
- * page loses the deal, which is the honest behaviour until Phase 8 adds save.
+ * Every input lives in page state and the engine recomputes from it on each
+ * render — a saved deal restores the inputs, never the answers, so a change to
+ * a weight or a rate shows up on the next open rather than being frozen into
+ * whatever was true the day someone pressed Save.
  */
 export function ScreenPage({
   assumptions,
   assumptionsOrigin,
   user,
+  initial = null,
+  demo = false,
+  canSave,
 }: ScreenPageProps) {
-  const [deal, setDeal] = useState<DealFields>(DEFAULT_DEAL);
-  const [answers, setAnswers] = useState<Record<string, Answer>>({});
-  const [notes, setNotes] = useState<Record<string, string>>({});
-  const [probability, setProbability] = useState(assumptions.probability.default);
-  const [fl, setFl] = useState<FirstLookFields>(EMPTY_FIRST_LOOK);
+  const router = useRouter();
+  const seedDeal = initial?.deal ?? (demo ? DEFAULT_DEAL : EMPTY_DEAL);
+  const seedProgram = initial?.program ?? (demo ? MEDLEY_PROGRAM : EMPTY_PROGRAM);
+
+  const [dealId, setDealId] = useState<string | null>(initial?.id ?? null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [savedAt, setSavedAt] = useState<string | null>(
+    initial ? "Loaded from the pipeline" : null,
+  );
+
+  const [deal, setDeal] = useState<DealFields>(seedDeal);
+  const [answers, setAnswers] = useState<Record<string, Answer>>(
+    initial?.answers ?? {},
+  );
+  const [notes, setNotes] = useState<Record<string, string>>(
+    initial?.notes ?? {},
+  );
+  const [probability, setProbability] = useState(
+    initial?.probability ?? assumptions.probability.default,
+  );
+  const [fl, setFl] = useState<FirstLookFields>(
+    initial?.firstLook ?? EMPTY_FIRST_LOOK,
+  );
   const [demoStatus, setDemoStatus] = useState<"idle" | "loading">("idle");
-  const [demoMetrics, setDemoMetrics] = useState<ScoredMetric[] | null>(null);
-  const [program, setProgram] = useState<ProgramFields>(MEDLEY_PROGRAM);
-  const [costSelections, setCostSelections] =
-    useState<Record<string, CostSelection>>(DEFAULT_COST_SELECTIONS);
-  const [globalMultiplier, setGlobalMultiplier] = useState(1);
+  const [demoMetrics, setDemoMetrics] = useState<ScoredMetric[] | null>(
+    initial?.demographicMetrics ?? null,
+  );
+  const [program, setProgram] = useState<ProgramFields>(seedProgram);
+  const [costSelections, setCostSelections] = useState<
+    Record<string, CostSelection>
+  >(initial?.costSelections ?? (demo ? DEFAULT_COST_SELECTIONS : {}));
+  const [globalMultiplier, setGlobalMultiplier] = useState(
+    initial?.globalMultiplier ?? 1,
+  );
   const [costs, setCosts] = useState<CostResolution | null>(null);
   const [costError, setCostError] = useState<string | null>(null);
   const [costLoading, setCostLoading] = useState(false);
   const [libraryOrigin, setLibraryOrigin] = useState<string | null>(null);
-  const [comps, setComps] = useState<Comp[] | null>(null);
+  const [comps, setComps] = useState<Comp[] | null>(initial?.comps ?? null);
   const [compsError, setCompsError] = useState<string | null>(null);
   const [compsLoading, setCompsLoading] = useState(false);
   // Absent means "untouched", which resolves to the default in `compIncluded`:
   // ticked, unless the comp is below the ratings floor.
-  const [compsIncluded, setCompsIncluded] = useState<Record<string, boolean>>({});
-  const [rents, setRents] = useState<RentFields>(EMPTY_RENTS);
+  const [compsIncluded, setCompsIncluded] = useState<Record<string, boolean>>(
+    initial?.compsIncluded ?? {},
+  );
+  const [rents, setRents] = useState<RentFields>(initial?.rents ?? EMPTY_RENTS);
   const [rentSources, setRentSources] = useState<
     Partial<Record<RentFieldKey, RentSource>>
-  >({});
+  >(initial?.rentSources ?? {});
   const [drafts, setDrafts] = useState<RentDraft[] | null>(null);
   const [draftNotes, setDraftNotes] = useState<string | null>(null);
   const [draftError, setDraftError] = useState<string | null>(null);
@@ -544,6 +590,86 @@ export function ScreenPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sensitivityOpen, gridRequestKey]);
 
+  // ── Save ────────────────────────────────────────────────────────────────
+  /**
+   * Write the deal. The first save creates and mints an id; every later save
+   * updates in place, so a deal has one row however many times it is screened.
+   *
+   * The verdicts go with it, denormalised, because the pipeline lists every
+   * deal at once and must not resolve a cost stack per row to draw a table.
+   */
+  async function save() {
+    setSaving(true);
+    setSaveError(null);
+
+    const snapshot: DealSnapshot = {
+      id: dealId ?? undefined,
+      deal,
+      answers,
+      notes,
+      probability,
+      program,
+      costSelections,
+      globalMultiplier,
+      rents,
+      rentSources,
+      firstLook: fl,
+      comps: comps ?? [],
+      compsIncluded,
+      demographicMetrics: demoMetrics,
+      computed: {
+        weightedScore: screen.weightedScore,
+        unknownShare: screen.unknownShare,
+        koPass: screen.koPass,
+        demoBand: demographics.band,
+        verdict: screen.verdict,
+        prob: probability,
+        probWeighted: screen.probabilityWeightedScore,
+        totalNoi: firstLookResult?.totalNoi ?? null,
+        totalCostExLand: firstLookResult?.totalCostExLand ?? null,
+        maxLandPrice: firstLookResult?.maxLandPrice ?? null,
+        headroomPctOfAsk: firstLookResult?.headroomPctOfAsk ?? null,
+        yocOnCost: firstLookResult?.yocOnCost ?? null,
+        blendedYoc: firstLookResult?.blendedYoc ?? null,
+        retailShareOfNoi: firstLookResult?.retailShareOfNoi ?? null,
+        landTest: firstLookResult?.landTest ?? null,
+        combinedVerdict: combined,
+      },
+    };
+
+    try {
+      const response = await fetch(asset("/api/deals"), {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(snapshot),
+        cache: "no-store",
+      });
+      const payload = (await response.json()) as
+        | { id: string; updatedAt: string; updatedBy: string }
+        | { error: string };
+
+      setSaving(false);
+      if (!response.ok || "error" in payload) {
+        setSaveError("error" in payload ? payload.error : "Save failed.");
+        return;
+      }
+
+      setSavedAt(
+        `Saved ${new Date(payload.updatedAt).toLocaleTimeString()} by ${payload.updatedBy}`,
+      );
+
+      // First save: move to the deal's own URL so a reload restores it and the
+      // address bar is something you can send to someone.
+      if (!dealId) {
+        setDealId(payload.id);
+        router.replace(`/deals/${payload.id}`);
+      }
+    } catch (error) {
+      setSaving(false);
+      setSaveError(error instanceof Error ? error.message : String(error));
+    }
+  }
+
   // ── Captions ────────────────────────────────────────────────────────────
   const demographicsSource =
     deal.demoSource === "api"
@@ -570,7 +696,7 @@ export function ScreenPage({
 
   return (
     <>
-      <SiteHeader deal={deal} />
+      <SiteHeader deal={deal} active="screen" />
 
       <div className="hidden flex-1 min-[1180px]:block">
         <div
@@ -773,6 +899,12 @@ export function ScreenPage({
             resiUnits={sanity.multifamilyUnits || null}
             demographicMetrics={demoMetrics}
             onSensitivity={() => setSensitivityOpen(true)}
+            onSave={canSave ? () => void save() : undefined}
+            saving={saving}
+            saveError={saveError}
+            savedAt={savedAt}
+            saveLabel={dealId ? "Update pipeline" : "Save to pipeline"}
+            pdfHref={dealId ? asset(`/api/deals/${dealId}/pdf`) : null}
           />
         </div>
       </div>

@@ -29,7 +29,15 @@ export async function loadCostLibrary(): Promise<LoadedCostLibrary> {
   if (process.env.DATABASE_URL) {
     const { getDb } = await import("@/lib/db/client");
     const { costLibrary } = await import("@/lib/db/schema");
-    const rows = await getDb().select().from(costLibrary);
+    let rows = await getDb().select().from(costLibrary);
+
+    // First run against a fresh database, same as assumptions.
+    if (rows.length === 0) {
+      const { seedCostLibrary } = await import("@/lib/db/cost-library-seed");
+      await seedCostLibrary();
+      rows = await getDb().select().from(costLibrary);
+    }
+
     return {
       library: rows.map((row) => ({
         lineKey: row.lineKey,

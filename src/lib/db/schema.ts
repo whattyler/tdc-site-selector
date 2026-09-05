@@ -93,6 +93,15 @@ export const screenAnswerEnum = pgEnum("screen_answer", ["yes", "maybe", "no"]);
 
 export const koResultEnum = pgEnum("ko_result", ["PASS", "FAIL"]);
 
+export const combinedVerdictEnum = pgEnum("combined_verdict", [
+  "DOUBLE GO",
+  "GO — LAND FAIL",
+  "WATCH",
+  "INCOMPLETE",
+  "NO-GO",
+  "NOT SCORED",
+]);
+
 export const verdictEnum = pgEnum("verdict", [
   "GO",
   "WATCH",
@@ -125,6 +134,16 @@ export const deals = pgTable(
       mode: "number",
     }),
     createdBy: text("created_by").notNull(),
+    /** Who last pressed Save. Stamped on every write, not just the first. */
+    updatedBy: text("updated_by"),
+    /** Deal-wide cost multiplier. A per-line one lives on `cost_lines`. */
+    costGlobalMultiplier: numeric("cost_global_multiplier", {
+      precision: 6,
+      scale: 4,
+      mode: "number",
+    })
+      .notNull()
+      .default(1),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -159,6 +178,8 @@ export const programs = pgTable("programs", {
     .primaryKey()
     .references(() => deals.id, { onDelete: "cascade" }),
   resiUnits: integer("resi_units"),
+  /** Weighted average unit size. Residential NOI is built off this. */
+  avgNsf: integer("avg_nsf"),
   /** [{ type, count, avgNsf }] */
   unitMix: jsonb("unit_mix"),
   resiNrsf: integer("resi_nrsf"),
@@ -200,12 +221,23 @@ export const revenue = pgTable("revenue", {
     scale: 2,
     mode: "number",
   }),
-  nonrecovPsf: numeric("nonrecov_psf", {
+  /**
+   * Split per component. A single non-recoverable column could not hold a
+   * mixed-use deal: retail and office are quoted on different structures and
+   * routinely differ.
+   */
+  retailNonrecovPsf: numeric("retail_nonrecov_psf", {
     precision: 10,
     scale: 4,
     mode: "number",
   }),
-  rentSource: text("rent_source"),
+  officeNonrecovPsf: numeric("office_nonrecov_psf", {
+    precision: 10,
+    scale: 4,
+    mode: "number",
+  }),
+  /** Per field: "manual" or "ai_confirmed". Never "ai_draft" — see comps. */
+  rentSource: jsonb("rent_source"),
 });
 
 export const screenResults = pgTable("screen_results", {
@@ -223,6 +255,66 @@ export const screenResults = pgTable("screen_results", {
     .notNull()
     .defaultNow(),
 });
+
+/**
+ * Gate 2 as of the last save. Denormalised on purpose: the pipeline lists every
+ * deal at once and must not re-resolve a cost stack per row to draw a table.
+ */
+export const firstLookResults = pgTable("first_look_results", {
+  dealId: uuid("deal_id")
+    .primaryKey()
+    .references(() => deals.id, { onDelete: "cascade" }),
+  totalNoi: numeric("total_noi", { precision: 16, scale: 2, mode: "number" }),
+  totalCostExLand: numeric("total_cost_ex_land", {
+    precision: 16,
+    scale: 2,
+    mode: "number",
+  }),
+  maxLandPrice: numeric("max_land_price", {
+    precision: 16,
+    scale: 2,
+    mode: "number",
+  }),
+  /** Headroom over the ask as a share of it. Null when there is no ask. */
+  headroomPctOfAsk: doublePrecision("headroom_pct_of_ask"),
+  yocOnCost: doublePrecision("yoc_on_cost"),
+  blendedYoc: doublePrecision("blended_yoc"),
+  retailShareOfNoi: doublePrecision("retail_share_of_noi"),
+  /** Null is the workbook em-dash: the test ran with no ask to test against. */
+  landTest: koResultEnum("land_test"),
+  combinedVerdict: combinedVerdictEnum("combined_verdict").notNull(),
+  computedAt: timestamp("computed_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+/**
+ * Census results keyed the way the dashboard keys them. Spec A4.
+ *
+ * A geohash7 cell is about 150 m across, so two addresses on the same parcel
+ * share a row. `version` carries the ACS vintage and scoring revision, so a
+ * change to either invalidates every cached row without a delete.
+ */
+export const demographicsCache = pgTable(
+  "demographics_cache",
+  {
+    geohash7: text("geohash7").notNull(),
+    radiusMi: numeric("radius_mi", {
+      precision: 5,
+      scale: 2,
+      mode: "number",
+    }).notNull(),
+    version: text("version").notNull(),
+    /** The whole computed response, as the route would have returned it. */
+    payload: jsonb("payload").notNull(),
+    fetchedAt: timestamp("fetched_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.geohash7, table.radiusMi, table.version] }),
+  ],
+);
 
 // ---------------------------------------------------------------------------
 // Per-deal collections
@@ -273,7 +365,11 @@ export const comps = pgTable(
       .references(() => deals.id, { onDelete: "cascade" }),
     placeId: text("place_id"),
     name: text("name").notNull(),
+    address: text("address"),
     type: compTypeEnum("type").notNull(),
+    rating: doublePrecision("rating"),
+    /** Below the ratings floor the row is flagged low-signal and starts unticked. */
+    ratingCount: integer("rating_count"),
     lat: doublePrecision("lat"),
     lng: doublePrecision("lng"),
     distanceMi: numeric("distance_mi", {
@@ -377,6 +473,8 @@ export type CostLine = typeof costLines.$inferSelect;
 export type Comp = typeof comps.$inferSelect;
 export type ScreenAnswer = typeof screenAnswers.$inferSelect;
 export type ScreenResult = typeof screenResults.$inferSelect;
+export type FirstLookRow = typeof firstLookResults.$inferSelect;
+export type DemographicsCacheRow = typeof demographicsCache.$inferSelect;
 export type CostLibraryRow = typeof costLibrary.$inferSelect;
 export type CostLibraryLogRow = typeof costLibraryLog.$inferSelect;
 export type AssumptionRecord = typeof assumptions.$inferSelect;

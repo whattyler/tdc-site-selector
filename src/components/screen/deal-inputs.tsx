@@ -46,10 +46,34 @@ export interface DealFields {
   demoDetail: string | null;
 }
 
+/** A deal with nothing in it. What "New deal" opens. */
+export const EMPTY_DEAL: DealFields = {
+  name: "",
+  address: "",
+  submarket: "",
+  productType: "auto",
+  mu: "",
+  mf: "",
+  acreage: "",
+  lat: null,
+  lng: null,
+  geohash7: null,
+  county: null,
+  state: null,
+  lastSubmarketFromGeocode: null,
+  demoSource: "none",
+  demoDetail: null,
+};
+
 /**
- * The page opens on Medley rather than an empty form. It is the reference deal
- * everyone here already knows, so the first thing you see is a worked example
- * rather than eleven blank fields. The address is geocoded and scored on mount.
+ * Medley, the reference deal. Reachable at `?demo=medley`.
+ *
+ * This used to be what the root opened on, so the page never showed eleven
+ * blank fields. Phase 8 made that dangerous rather than friendly: with a Save
+ * button and a shared pipeline, a pre-filled default is one keystroke away from
+ * putting a deal called Medley, with Medley's program and Medley's acreage,
+ * into everyone's list. A new deal is now blank, and the worked example is
+ * something you ask for.
  */
 export const DEFAULT_DEAL: DealFields = {
   name: "Medley",

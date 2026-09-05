@@ -15,6 +15,20 @@
       "when": 1788576864559,
       "tag": "0001_nostalgic_vindicator",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788581218544,
+      "tag": "0002_broad_malice",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788581227343,
+      "tag": "0003_gifted_namor",
+      "breakpoints": true
     }
   ]
 }

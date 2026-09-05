@@ -71,6 +71,14 @@ interface VerdictPanelProps {
   demographicMetrics: ScoredMetric[] | null;
   /** Opens the sensitivity drawer. Undefined until there is a First Look to vary. */
   onSensitivity?: () => void;
+  /** Undefined when there is no database to save to. */
+  onSave?: () => void;
+  saving?: boolean;
+  saveError?: string | null;
+  savedAt?: string | null;
+  saveLabel?: string;
+  /** Null until the deal has an id — a PDF needs something to read back. */
+  pdfHref?: string | null;
 }
 
 export function VerdictPanel({
@@ -85,6 +93,12 @@ export function VerdictPanel({
   resiUnits,
   demographicMetrics,
   onSensitivity,
+  onSave,
+  saving = false,
+  saveError = null,
+  savedAt = null,
+  saveLabel = "Save to pipeline",
+  pdfHref = null,
 }: VerdictPanelProps) {
   const tone = verdictTone(combined);
 
@@ -270,11 +284,40 @@ export function VerdictPanel({
         >
           Sensitivity
         </PanelButton>
-        <PanelButton disabled>PDF</PanelButton>
-        <PanelButton disabled primary>
-          Save to pipeline
+        {pdfHref ? (
+          <a
+            href={pdfHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="micro border border-line-strong bg-transparent px-3 py-1.5 text-ink transition-colors hover:bg-surface-3"
+          >
+            PDF
+          </a>
+        ) : (
+          <PanelButton disabled disabledReason="Save the deal first — a PDF is generated from the saved record">
+            PDF
+          </PanelButton>
+        )}
+        <PanelButton
+          primary
+          onClick={onSave}
+          disabled={!onSave || saving}
+          disabledReason="No database configured, so there is nowhere to save"
+        >
+          {saving ? "Saving…" : saveLabel}
         </PanelButton>
       </div>
+
+      {(saveError || savedAt) && (
+        <p
+          className={cn(
+            "border-t border-line px-4 pb-3 text-sm",
+            saveError ? "text-maybe" : "caption",
+          )}
+        >
+          {saveError ?? savedAt}
+        </p>
+      )}
     </aside>
   );
 }

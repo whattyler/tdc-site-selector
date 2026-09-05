@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 
 import { loadAssumptionsForRequest } from "@/lib/assumptions-source";
+import { readCache, writeCache } from "@/lib/db/demographics-cache";
 import { CensusError, fetchDemographics } from "@/lib/demographics/census";
 import { encodeGeohash } from "@/lib/geohash";
 import { scoreDemographics, type ScoredMetric } from "@/lib/scoring";
@@ -34,23 +35,6 @@ export interface DemographicsResponse {
  * invalidates cached results the same way a vintage change does.
  */
 const SCORING_REVISION = 1;
-
-interface CacheEntry {
-  body: DemographicsResponse;
-  at: number;
-}
-
-/**
- * Per-instance memo. Phase 8 moves this into the `demographics` table, keyed
- * the same way, so a second screen of the same site survives a restart.
- */
-const cache = new Map<string, CacheEntry>();
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-const CACHE_MAX_ENTRIES = 500;
-
-function cacheKey(geohash7: string, radius: number, version: string): string {
-  return `${geohash7}|${radius}|${version}`;
-}
 
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
@@ -88,11 +72,11 @@ export async function GET(request: NextRequest) {
   const acsYear = assumptions.demo.acsYear;
   const version = `acs${acsYear}/s${SCORING_REVISION}`;
   const geohash7 = encodeGeohash(lat, lng, 7);
-  const key = cacheKey(geohash7, radius, version);
+  const key = { geohash7, radiusMi: radius, version };
 
-  const hit = cache.get(key);
-  if (hit && Date.now() - hit.at < CACHE_TTL_MS) {
-    return Response.json(hit.body, {
+  const hit = await readCache<DemographicsResponse>(key);
+  if (hit) {
+    return Response.json(hit, {
       headers: { "cache-control": "private, no-store", "x-cache": "hit" },
     });
   }
@@ -113,12 +97,7 @@ export async function GET(request: NextRequest) {
       pulledAt: new Date().toISOString(),
     };
 
-    if (cache.size >= CACHE_MAX_ENTRIES) {
-      // Cheapest sane eviction: drop the oldest insertion.
-      const oldest = cache.keys().next();
-      if (!oldest.done) cache.delete(oldest.value);
-    }
-    cache.set(key, { body, at: Date.now() });
+    await writeCache(key, body);
 
     return Response.json(body, {
       headers: { "cache-control": "private, no-store", "x-cache": "miss" },

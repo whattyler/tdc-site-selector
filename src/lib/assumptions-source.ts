@@ -26,7 +26,18 @@ export interface LoadedAssumptions {
 export async function loadAssumptionsForRequest(): Promise<LoadedAssumptions> {
   if (process.env.DATABASE_URL) {
     const { loadAssumptions } = await import("@/lib/db/assumptions");
-    return { assumptions: await loadAssumptions(), origin: "database" };
+    let assumptions = await loadAssumptions();
+
+    // First run against a fresh database. Seed from the CSV rather than
+    // rendering a page with no levers in it — the CSV is the seed source, so
+    // this cannot introduce different numbers.
+    if (assumptions.criteria.length === 0) {
+      const { seedAssumptions } = await import("@/lib/db/seed");
+      await seedAssumptions();
+      assumptions = await loadAssumptions();
+    }
+
+    return { assumptions, origin: "database" };
   }
 
   const text = await readFile(CSV_PATH, "utf8");
