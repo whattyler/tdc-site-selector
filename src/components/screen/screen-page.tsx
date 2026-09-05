@@ -28,6 +28,11 @@ import {
   type ScoredMetric,
   screenDeal,
 } from "@/lib/scoring";
+import {
+  buildCostRentGrid,
+  type CostRentGrid,
+  type ScenarioCell,
+} from "@/lib/sensitivity";
 
 import { DealInputs, type DealFields, DEFAULT_DEAL } from "./deal-inputs";
 import {
@@ -53,6 +58,7 @@ import {
   ProgramInputs,
   type ProgramFields,
 } from "./program-inputs";
+import { SensitivityDrawer } from "./sensitivity-drawer";
 import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
 import { VerdictPanel } from "./verdict-panel";
@@ -120,6 +126,10 @@ export function ScreenPage({
   const [draftError, setDraftError] = useState<string | null>(null);
   const [draftLoading, setDraftLoading] = useState(false);
   const [draftModel, setDraftModel] = useState<string | null>(null);
+  // Page state only. Closing the drawer leaves nothing behind.
+  const [sensitivityOpen, setSensitivityOpen] = useState(false);
+  const [costRentGrid, setCostRentGrid] = useState<CostRentGrid | null>(null);
+  const [costRentLoading, setCostRentLoading] = useState(false);
 
   /**
    * Pull MU/MF for a geocoded point. Fields stay editable throughout, and a
@@ -383,39 +393,36 @@ export function ScreenPage({
     ? allocateCostExLand(costs, costProgram)
     : { retail: 0, office: 0, multifamily: 0 };
 
+  // Hoisted so sensitivity can re-run the same deal with one input changed
+  // rather than rebuilding the shape and letting the two drift apart.
+  const pads = {
+    hotelKeys: parseNumber(fl.hotelKeys) ?? 0,
+    townhomeLots: parseNumber(fl.townhomeLots) ?? 0,
+    outparcels: parseNumber(fl.outparcels) ?? 0,
+  };
+  const askingPrice = parseNumber(fl.askingPrice) ?? 0;
+  const firstLookInput = {
+    components: {
+      retail: { noi: revenue.retail.noi ?? 0, costExLand: allocated.retail },
+      office: { noi: revenue.office.noi ?? 0, costExLand: allocated.office },
+      multifamily: {
+        noi: revenue.multifamily.noi ?? 0,
+        costExLand: allocated.multifamily,
+      },
+    },
+    pads,
+    askingPrice,
+    // Acreage is a site attribute, so it is typed in the Deal section.
+    acreage: parseNumber(deal.acreage) ?? 0,
+    sanity,
+  };
+
   let firstLookResult: FirstLookResult | null = null;
   let gate2Error: string | null = null;
 
   if (gate2Attempted) {
     try {
-      firstLookResult = firstLook(
-        {
-          components: {
-            retail: {
-              noi: revenue.retail.noi ?? 0,
-              costExLand: allocated.retail,
-            },
-            office: {
-              noi: revenue.office.noi ?? 0,
-              costExLand: allocated.office,
-            },
-            multifamily: {
-              noi: revenue.multifamily.noi ?? 0,
-              costExLand: allocated.multifamily,
-            },
-          },
-          pads: {
-            hotelKeys: parseNumber(fl.hotelKeys) ?? 0,
-            townhomeLots: parseNumber(fl.townhomeLots) ?? 0,
-            outparcels: parseNumber(fl.outparcels) ?? 0,
-          },
-          askingPrice: parseNumber(fl.askingPrice) ?? 0,
-          // Acreage is a site attribute, so it is typed in the Deal section.
-          acreage: parseNumber(deal.acreage) ?? 0,
-          sanity,
-        },
-        assumptions,
-      );
+      firstLookResult = firstLook(firstLookInput, assumptions);
     } catch (error) {
       // A placeholder pad rate refusing to compute. Surface it rather than
       // showing a land price built on a stand-in number.
@@ -429,6 +436,113 @@ export function ScreenPage({
       : (firstLookResult?.landTest ?? null);
 
   const combined = combinedVerdict(screen.verdict, gate2);
+
+  // ── Sensitivity ─────────────────────────────────────────────────────────
+  /**
+   * Grid A detail, on demand. The cell values come from `sensitivityGrid()`
+   * exactly as the workbook builds them; the hover readout re-runs the whole
+   * First Look at that yield pair instead of re-deriving the arithmetic here.
+   */
+  const yocCellAt = (mfIndex: number, commIndex: number): ScenarioCell | null => {
+    if (!firstLookResult) return null;
+    const { commYocAxis, mfYocAxis } = firstLookResult.sensitivity;
+    const comm = commYocAxis[commIndex];
+    const mf = mfYocAxis[mfIndex];
+    if (comm === undefined || mf === undefined) return null;
+
+    try {
+      const scenario = firstLook(
+        {
+          ...firstLookInput,
+          yocOverrides: { retail: comm, office: comm, multifamily: mf },
+        },
+        assumptions,
+      );
+      return {
+        // Read from the workbook grid, not from this call, so the readout can
+        // never quietly disagree with the cell it is describing.
+        maxLand: firstLookResult.sensitivity.cells[mfIndex][commIndex],
+        totalNoi: scenario.totalNoi,
+        yocOnCost: scenario.yocOnCost,
+        blendedYoc: scenario.blendedYoc,
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  // Grid B costs five server round trips, so it is built when the drawer opens
+  // and rebuilt only if the deal underneath it changes.
+  const gridRequestKey = JSON.stringify({
+    costProgram,
+    costSelections,
+    revenue: {
+      resiRentPsfMo: parseNumber(rents.resiRentPsfMo),
+      resiVacancy: share(rents.resiVacancy),
+      opexPerUnit: parseNumber(rents.opexPerUnit),
+      retailRentPsf: parseNumber(rents.retailRentPsf),
+      retailVacancy: share(rents.retailVacancy),
+      retailNonRecovPsf: parseNumber(rents.retailNonRecovPsf),
+      officeRentPsf: parseNumber(rents.officeRentPsf),
+      officeVacancy: share(rents.officeVacancy),
+      officeNonRecovPsf: parseNumber(rents.officeNonRecovPsf),
+    },
+    pads,
+    askingPrice,
+    acreage: parseNumber(deal.acreage) ?? 0,
+    sanity,
+  });
+
+  useEffect(() => {
+    if (!sensitivityOpen) return;
+
+    const request = JSON.parse(gridRequestKey) as {
+      costProgram: typeof costProgram;
+      costSelections: Record<string, CostSelection>;
+      revenue: Omit<
+        Parameters<typeof computeRevenue>[0],
+        "resiUnits" | "resiAvgNsf" | "retailSf" | "officeSf"
+      >;
+      pads: typeof pads;
+      askingPrice: number;
+      acreage: number;
+      sanity: typeof sanity;
+    };
+    const controller = new AbortController();
+
+    setCostRentLoading(true);
+    buildCostRentGrid(
+      {
+        program: request.costProgram,
+        selections: Object.values(request.costSelections),
+        revenue: {
+          ...request.revenue,
+          resiUnits: request.costProgram.resiUnits || null,
+          resiAvgNsf: parseNumber(program.avgNsf),
+          retailSf: request.costProgram.retailSf || null,
+          officeSf: request.costProgram.officeSf || null,
+        },
+        pads: request.pads,
+        askingPrice: request.askingPrice,
+        acreage: request.acreage,
+        sanity: request.sanity,
+        assumptions,
+      },
+      controller.signal,
+    )
+      .then((grid) => {
+        if (controller.signal.aborted) return;
+        setCostRentLoading(false);
+        setCostRentGrid(grid);
+      })
+      .catch(() => {
+        if (controller.signal.aborted) return;
+        setCostRentLoading(false);
+      });
+
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sensitivityOpen, gridRequestKey]);
 
   // ── Captions ────────────────────────────────────────────────────────────
   const demographicsSource =
@@ -658,9 +772,24 @@ export function ScreenPage({
             mf={mf}
             resiUnits={sanity.multifamilyUnits || null}
             demographicMetrics={demoMetrics}
+            onSensitivity={() => setSensitivityOpen(true)}
           />
         </div>
       </div>
+
+      {firstLookResult && (
+        <SensitivityDrawer
+          open={sensitivityOpen}
+          onClose={() => setSensitivityOpen(false)}
+          dealName={deal.name || deal.address || "Untitled"}
+          firstLook={firstLookResult}
+          askingPrice={askingPrice}
+          yocCellAt={yocCellAt}
+          costRentGrid={costRentGrid}
+          costRentLoading={costRentLoading}
+          currentMultiplier={globalMultiplier}
+        />
+      )}
 
       <div className="mx-auto max-w-md flex-1 px-6 py-16 text-center min-[1180px]:hidden">
         <h2 className="text-md font-[650] text-ink">Wider window needed</h2>

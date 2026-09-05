@@ -69,6 +69,8 @@ interface VerdictPanelProps {
   resiUnits: number | null;
   /** The nine metrics behind the pull, when there has been one. */
   demographicMetrics: ScoredMetric[] | null;
+  /** Opens the sensitivity drawer. Undefined until there is a First Look to vary. */
+  onSensitivity?: () => void;
 }
 
 export function VerdictPanel({
@@ -82,6 +84,7 @@ export function VerdictPanel({
   mf,
   resiUnits,
   demographicMetrics,
+  onSensitivity,
 }: VerdictPanelProps) {
   const tone = verdictTone(combined);
 
@@ -260,7 +263,13 @@ export function VerdictPanel({
       </div>
 
       <div className="flex flex-wrap gap-2 border-t border-line px-4 py-3">
-        <PanelButton disabled>Sensitivity</PanelButton>
+        <PanelButton
+          onClick={onSensitivity}
+          disabled={!firstLook || !onSensitivity}
+          disabledReason="Needs a First Look to vary"
+        >
+          Sensitivity
+        </PanelButton>
         <PanelButton disabled>PDF</PanelButton>
         <PanelButton disabled primary>
           Save to pipeline
@@ -451,21 +460,29 @@ function PanelButton({
   children,
   primary = false,
   disabled = false,
+  onClick,
+  disabledReason = "Lands in a later phase",
 }: {
   children: React.ReactNode;
   primary?: boolean;
   disabled?: boolean;
+  onClick?: () => void;
+  disabledReason?: string;
 }) {
   return (
     <button
       type="button"
       disabled={disabled}
-      title={disabled ? "Lands in a later phase" : undefined}
+      onClick={onClick}
+      title={disabled ? disabledReason : undefined}
       className={cn(
         "micro border px-3 py-1.5 transition-colors",
         primary
           ? "border-[var(--toro-red)] bg-[var(--toro-red)] text-white hover:bg-[var(--toro-red-hover)]"
           : "border-line-strong bg-transparent text-ink-2 hover:bg-surface-3",
+        // Enabled and secondary reads brighter than the two that are not yet
+        // built, so the one live action is findable among them.
+        !disabled && !primary && "text-ink",
         disabled && "cursor-not-allowed",
       )}
     >

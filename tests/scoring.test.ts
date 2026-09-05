@@ -374,6 +374,24 @@ describe("first look", () => {
     expect(exact.yocGapBps).toBeCloseTo(0, 6);
   });
 
+  it("agrees with a full run at the same yield pair, cell for cell", () => {
+    // The drawer shows sensitivityGrid()'s cell and describes it with a
+    // firstLook() run at that pair. If those two ever disagree the readout is
+    // narrating a different scenario than the one under the cursor.
+    const base = firstLook(DEAL, A);
+    const { commYocAxis, mfYocAxis, cells } = base.sensitivity;
+
+    mfYocAxis.forEach((mf, mfIndex) => {
+      commYocAxis.forEach((comm, commIndex) => {
+        const scenario = firstLook(
+          { ...DEAL, yocOverrides: { retail: comm, office: comm, multifamily: mf } },
+          A,
+        );
+        expect(scenario.maxLandPrice).toBeCloseTo(cells[mfIndex][commIndex], 6);
+      });
+    });
+  });
+
   it("refuses to price a parcel off a placeholder rate", () => {
     expect(() =>
       padProceeds({ hotelKeys: 0, townhomeLots: 0, outparcels: 3 }, A),
