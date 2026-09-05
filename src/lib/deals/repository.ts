@@ -122,6 +122,11 @@ export async function saveDeal(
         mfScore: num(deal.mf),
         metrics: snapshot.demographicMetrics,
         source: deal.demoSource === "api" ? "api" : "manual",
+        // Must be in the update set too, not just the insert. A deal first
+        // saved with hand-typed scores and later re-saved after a Census pull
+        // would otherwise keep a null pull time next to source "api" — the
+        // caption would then claim a pull it could not date.
+        pulledAt: deal.demoSource === "api" ? now : null,
       },
     });
 
