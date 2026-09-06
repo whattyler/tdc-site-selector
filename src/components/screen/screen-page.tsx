@@ -928,11 +928,6 @@ export function ScreenPage({
                 }))
               }
             />
-
-            <p className="caption pb-8">
-              Phase 6 · page state only. Nothing is saved yet; reloading clears
-              the deal, the comps and any drafted rents.
-            </p>
           </div>
 
           <VerdictPanel
